@@ -1,6 +1,6 @@
 package com.nexus.ims.service;
 
-import com.nexus.ims.dao.ProductDao;
+import com.nexus.ims.dao.ProductDAO;
 import com.nexus.ims.model.Product;
 
 import java.math.BigDecimal;
@@ -12,43 +12,43 @@ import java.util.Optional;
  * Service encapsulating business logic, calculations, and validations for Product inventory.
  */
 public class ProductService {
-    private final ProductDao productDao;
+    private final ProductDAO productDAO;
 
     public ProductService() {
-        this.productDao = new ProductDao();
+        this.productDAO = new ProductDAO();
     }
 
-    public ProductService(ProductDao productDao) {
-        this.productDao = productDao;
+    public ProductService(ProductDAO productDAO) {
+        this.productDAO = productDAO;
     }
 
     public List<Product> getAllProducts() throws SQLException {
-        return productDao.findAll();
+        return productDAO.findAll();
     }
 
     public List<Product> getLowStockAlerts() throws SQLException {
-        return productDao.findLowStockProducts();
+        return productDAO.findLowStockProducts();
     }
 
     public Optional<Product> getProductById(int id) throws SQLException {
-        return Optional.ofNullable(productDao.findById(id));
+        return Optional.ofNullable(productDAO.findById(id));
     }
 
     public boolean createProduct(Product product) throws SQLException {
         validateProduct(product);
-        if (productDao.findBySku(product.getSku()) != null) {
+        if (productDAO.findBySku(product.getSku()) != null) {
             throw new IllegalArgumentException("Product with SKU '" + product.getSku() + "' already exists.");
         }
-        return productDao.save(product);
+        return productDAO.save(product);
     }
 
     public boolean updateProduct(Product product) throws SQLException {
         validateProduct(product);
-        return productDao.update(product);
+        return productDAO.update(product);
     }
 
     public boolean deleteProduct(int id) throws SQLException {
-        return productDao.deleteById(id);
+        return productDAO.deleteById(id);
     }
 
     private void validateProduct(Product product) {
@@ -72,4 +72,3 @@ public class ProductService {
         }
     }
 }
-

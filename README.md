@@ -1,141 +1,212 @@
-# Inventory Management System (IMS)
+# NEXUS Inventory Management System (IMS)
 
-[![Java Version](https://img.shields.io/badge/Java-17%2B-blue.svg)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
-[![Build Tool](https://img.shields.io/badge/Build-Maven-orange.svg)](https://maven.apache.org/)
-[![Database](https://img.shields.io/badge/Database-MySQL-informational.svg)](https://www.mysql.com/)
-[![Architecture](https://img.shields.io/badge/Architecture-MVC%20Desktop-green.svg)](#architecture-overview)
+[![Java Version](https://img.shields.io/badge/Java-17%20LTS-007396?logo=openjdk&logoColor=white)](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
+[![Build Tool](https://img.shields.io/badge/Build-Maven%203.9-C71A36?logo=apachemaven&logoColor=white)](https://maven.apache.org/)
+[![UI Framework](https://img.shields.io/badge/UI-FlatLaf%203.4-4A90E2)](https://www.formdev.com/flatlaf/)
+[![Database](https://img.shields.io/badge/Database-MySQL%208.0-4479A1?logo=mysql&logoColor=white)](https://www.mysql.com/)
+[![Architecture](https://img.shields.io/badge/Architecture-MVC%20%2B%20DAO-brightgreen)](#system-architecture)
+[![License](https://img.shields.io/badge/License-Academic%20Use-blue.svg)](#)
 
 ---
 
 ## 1. Project Overview
 
-The **NEXUS Inventory Management System (IMS)** is a desktop application developed for the Java II curriculum. Built with standard **Java 17+**, **Swing (FlatLaf UI)**, and a **MySQL** relational database, it follows standard **Model-View-Controller (MVC)** and **Data Access Object (DAO)** enterprise architectural patterns.
+The **NEXUS Inventory Management System (IMS)** is an enterprise desktop application designed for modern warehouse operations, catalog tracking, and inventory auditing. Built with **Java 17 LTS**, **Swing (FlatLaf Look & Feel)**, and **MySQL 8.0**, the system adheres to strict **Model-View-Controller (MVC)** and **Data Access Object (DAO)** architectural standards.
 
-### Core Capabilities
-- **Product & Inventory Management**: Stock tracking, low-stock threshold alerting, categorisation.
-- **Supplier & Order Management**: Supplier records, automated purchase recording.
-- **Stock Transactions**: Audit logging for inbound shipments, sales stock reductions, adjustments.
-- **Role-Based Access Control (RBAC)**: Secure multi-tier authentication (Admin, Manager, Staff) with salted BCrypt password hashing.
-- **Interactive UI**: Responsive desktop GUI with modern desktop theming.
-
----
-
-## 2. Team NEXUS Members & Project Roles
-
-| Member Name | Role & Core Responsibilities |
-| :--- | :--- |
-| **Team Lead / DevOps** | Architecture definition, Git repository lifecycle, CI/CD configuration, security standards. |
-| **Backend & Database Engineer** | Database schema design (`schema.sql`), JDBC connection pooling, DAO implementation. |
-| **Business Logic & Service Layer** | Service transaction handling, stock level algorithms, input validation, reporting logic. |
-| **GUI & UI/UX Developer** | Swing components, FlatLaf theme integration, MVC View event bindings and dialogs. |
-| **QA & Verification Engineer** | Unit tests (JUnit 5), data integrity verification, manual system testing. |
+### Key Capabilities
+- **Role-Based Access Control (RBAC)**: Multi-tier operator authentication (`ADMIN`, `MANAGER`, `STAFF`) secured via salted BCrypt password hashing (Cost Factor 12).
+- **Product Catalog Management**: Track inventory items with unique SKU constraints, real-time live search, categorization, and pricing calculations.
+- **ACID-Compliant Stock Movement**: Atomic stock increments (receipts) and decrements (sales dispatch) protected by database row-level locking (`SELECT ... FOR UPDATE`) with automatic rollback on error.
+- **Stock Threshold Monitoring**: Automatic low-stock visual badging and warnings whenever `quantity_in_stock <= reorder_level`.
+- **Financial Asset Valuation**: Real-time warehouse valuation computing total financial asset worth using high-precision `BigDecimal` arithmetic (`SUM(quantity * purchasePrice)`).
+- **Modern Desktop UI**: Polished FlatLaf theme, High-DPI screen scaling, dynamic `CardLayout` view switching, live KPI cards, and live system status clock.
 
 ---
 
-## 3. Architecture Overview
+## 2. System Architecture
 
-The system strictly decouples user interface from business rules and persistence:
+The application strictly separates presentation, business rules, and persistence:
 
 ```
-src/main/java/com/nexus/ims/
-├── Main.java                 # Application Bootstrap & Entry Point
-├── model/                    # Domain Entities (POJOs representing DB tables)
-│   ├── Product.java
-│   ├── Category.java
-│   ├── Supplier.java
-│   ├── StockTransaction.java
-│   └── User.java
-├── dao/                      # Data Access Objects (CRUD & JDBC Transactions)
-│   ├── BaseDao.java
-│   ├── ProductDao.java
-│   └── UserDao.java
-├── service/                  # Business Logic & Workflow Validations
-│   ├── ProductService.java
-│   └── AuthService.java
-├── view/                     # Presentation Tier (Swing Frames, Panels, Tables)
-│   ├── LoginFrame.java
-│   └── MainFrame.java
-├── controller/               # Event Listeners & Mediators (View <-> Service)
-│   ├── AuthController.java
-│   └── ProductController.java
-└── util/                     # Cross-Cutting Infrastructure Utilities
-    ├── Constants.java
-    ├── DatabaseConnection.java
-    └── PasswordHasher.java
+[ User Interaction: Desktop UI ]
+               │
+               ▼
+┌──────────────────────────────┐
+│  Presentation Tier (View)     │  Swing Frames (LoginFrame, DashboardFrame)
+└──────────────┬───────────────┘  Pure visual renderers with no business logic
+               │ ActionEvents / Delegation
+               ▼
+┌──────────────────────────────┐
+│  Controller Tier (MVC)       │  AuthController, DashboardController
+└──────────────┬───────────────┘  Asynchronous SwingWorker task execution
+               │
+               ▼
+┌──────────────────────────────┐
+│  Service Tier (Logic)        │  InventoryService, AuthService, ProductService
+└──────────────┬───────────────┘  Validations, non-negative stock guards, valuation
+               │
+               ▼
+┌──────────────────────────────┐
+│  Persistence Tier (DAO)      │  ProductDAO, StockTransactionDAO, UserDao
+└──────────────┬───────────────┘  Parameterized PreparedStatement queries & transactions
+               │
+               ▼
+┌──────────────────────────────┐
+│  Relational Database         │  MySQL 8.0 Server (nexus_ims_db)
+└──────────────────────────────┘
+```
+
+### Complete Codebase Layout:
+```
+C:\.vscode\NEXUS Java II Project\
+├── .gitignore                                      # Comprehensive production ignore rules
+├── CHANGELOG.md                                    # Semantic version release history
+├── pom.xml                                         # Maven project descriptor (Java 17, FlatLaf, MySQL, JUnit)
+├── README.md                                       # System technical manual & documentation
+├── mvnw.cmd                                        # Embedded zero-install Maven Wrapper for Windows
+├── run.ps1                                         # Local PowerShell launcher script
+├── migrate-db.ps1                                  # Automated MySQL detection and database migrator
+├── install-maven-permanently.ps1                   # Permanent global Maven installer
+└── src/
+    ├── main/
+    │   ├── resources/
+    │   │   ├── db.properties                       # Active JDBC configuration (URL, user, password)
+    │   │   ├── application.properties.example      # Credential configuration template
+    │   │   └── database/
+    │   │       ├── schema.sql                      # DDL: Tables, foreign keys, check constraints, indexes
+    │   │       └── data.sql                        # DML: Default roles, categories, and initial products
+    │   └── java/
+    │       └── com/nexus/ims/
+    │           ├── Main.java                       # Application Entry Point & FlatLaf Theme Bootstrap
+    │           ├── model/                          # Domain Entities (POJOs)
+    │           │   ├── Product.java                # SKU, pricing, stock, reorder boundaries
+    │           │   ├── Category.java               # Inventory category classification
+    │           │   ├── Supplier.java               # Vendor contact & address metadata
+    │           │   ├── StockTransaction.java       # Immutable stock movement audit ledger
+    │           │   └── User.java                   # User entity with Role-Based Access Control
+    │           ├── dao/                            # Data Access Objects (Raw JDBC)
+    │           │   ├── BaseDAO.java                # Generic CRUD contract interface
+    │           │   ├── ProductDAO.java             # Product catalog persistence & low-stock queries
+    │           │   ├── StockTransactionDAO.java    # Atomic ACID stock movement transaction manager
+    │           │   └── UserDao.java                # User lookups and credential persistence
+    │           ├── service/                        # Business Logic & Rules
+    │           │   ├── InventoryService.java       # Stock bounds validation & financial valuation
+    │           │   ├── AuthService.java            # BCrypt credential verification & user creation
+    │           │   └── ProductService.java         # Catalog validation workflows
+    │           ├── view/                           # Presentation Tier (Swing / FlatLaf)
+    │           │   ├── LoginFrame.java             # Centered login window with password toggle
+    │           │   └── DashboardFrame.java         # Multi-pane dashboard with sidebar, cards, and status bar
+    │           ├── controller/                     # Event Mediators (View <-> Service)
+    │           │   ├── AuthController.java         # Authentication flow and view transitions
+    │           │   └── DashboardController.java    # Navigation, search filter, and transaction modal bindings
+    │           └── util/                           # Infrastructure Utilities
+    │               ├── Constants.java              # Application constants & configuration keys
+    │               ├── DatabaseConnection.java     # Thread-safe Singleton JDBC connection factory
+    │               ├── DatabaseMigrator.java       # Native Java/JDBC schema and seed executor
+    │               └── PasswordHasher.java         # Salted BCrypt password hasher (Cost 12)
+    └── test/
+        └── java/
+            └── com/nexus/ims/service/
+                └── InventoryServiceTest.java       # JUnit 5 unit tests for business validation rules
 ```
 
 ---
 
-## 4. Prerequisites
+## 3. Prerequisites
 
-Before setting up and running the application, ensure your environment meets the following specifications:
-
-1. **Java Development Kit (JDK)**: Version 17 or higher (`jdk-17+`).
-   ```bash
+Ensure your system meets the following specifications:
+1. **Java Development Kit (JDK)**: Version 17 LTS or higher.
+   ```powershell
    java -version
-   javac -version
    ```
-2. **Apache Maven**: Version 3.8+ (included in most IDE distributions or via wrapper).
-   ```bash
-   mvn -version
-   ```
-3. **Database Server**: MySQL Server 8.0+ running locally or remotely on default port `3306`.
-4. **IDE**: VS Code (with Extension Pack for Java), Antigravity IDE, or IntelliJ IDEA.
+2. **Database Server**: MySQL Server 8.0+ running on port `3306` (or via XAMPP / WAMP / Laragon).
+3. **Build Tool**: Apache Maven (or use the included `mvnw.cmd` wrapper with zero local installation).
 
 ---
 
-## 5. Database Setup
+## 4. Database Setup & Migration
 
-1. Launch your MySQL command-line client or MySQL Workbench:
-   ```bash
-   mysql -u root -p
-   ```
-2. Execute the schema initialization script located at `src/main/resources/schema.sql` (or copy into your SQL console):
-   ```sql
-   CREATE DATABASE IF NOT EXISTS nexus_ims_db;
-   USE nexus_ims_db;
-   ```
-3. Configure your database credentials in `src/main/resources/application.properties` (or copy from `application.properties.example`):
-   ```properties
-   db.url=jdbc:mysql://localhost:3306/nexus_ims_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
-   db.username=root
-   db.password=YOUR_PASSWORD_HERE
-   ```
+### Step A: Configure Credentials
+Ensure your database credentials in [`src/main/resources/db.properties`](file:///C:/.vscode/NEXUS%20Java%20II%20Project/src/main/resources/db.properties) match your local MySQL configuration:
+```properties
+db.driver=com.mysql.cj.jdbc.Driver
+db.url=jdbc:mysql://localhost:3306/nexus_ims_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+db.username=root
+db.password=YOUR_MYSQL_PASSWORD
+```
+
+### Step B: Execute Migration
+Run **either** of the following automated migration solutions:
+
+#### Option 1: Native Java Migrator (Recommended — No `mysql.exe` CLI required)
+```powershell
+cd "C:\.vscode\NEXUS Java II Project"
+.\mvnw.cmd clean compile
+.\mvnw.cmd exec:java -Dexec.mainClass="com.nexus.ims.util.DatabaseMigrator"
+```
+
+#### Option 2: Automated PowerShell Script (Locates MySQL and registers PATH)
+```powershell
+cd "C:\.vscode\NEXUS Java II Project"
+.\migrate-db.ps1
+```
 
 ---
 
-## 6. Build & Execution Instructions
+## 5. Build, Test, & Run Instructions
 
-### A. Clone and Setup
-```bash
-git clone https://github.com/KHALILL2/NEXUS-Java-II-Project.git
-cd "NEXUS-Java-II-Project"
+All commands can be executed using the included Maven Wrapper (`.\mvnw.cmd`) without needing Maven installed in your system PATH.
+
+### 1. Compile the Project
+```powershell
+.\mvnw.cmd clean compile
 ```
 
-### B. Compile the Project
-```bash
-mvn clean compile
+### 2. Execute Automated Unit Tests
+```powershell
+.\mvnw.cmd test
 ```
 
-### C. Run the Application
-```bash
-mvn exec:java
+### 3. Launch the Application
+```powershell
+.\mvnw.cmd exec:java
 ```
 
-### D. Package into a Standalone Executable Fat-JAR
-```bash
-mvn clean package
+### 4. Build an Executable Standalone Fat-JAR
+```powershell
+.\mvnw.cmd clean package
 ```
 The compiled self-contained executable JAR will be located at:
-```bash
+```powershell
 java -jar target/nexus-inventory-management-1.0.0-SNAPSHOT.jar
 ```
 
 ---
 
-## 7. Version Control & Git Strategy
+## 6. Default Login Credentials
+
+| Username | Password | Role | Access Level |
+| :--- | :--- | :--- | :--- |
+| `admin` | `admin123` | **ADMIN** | Full administrative rights, user management, and stock adjustments. |
+| `manager` | `manager123` | **MANAGER** | Inventory updates, purchase receipts, and sales dispatch. |
+| `staff` | `staff123` | **STAFF** | Catalog viewing, stock inquiries, and basic operational logging. |
+
+---
+
+## 7. Team NEXUS Members & Project Roles
+
+| Member Name | Role & Core Responsibilities |
+| :--- | :--- |
+| **Team Lead / DevOps** | Git lifecycle, Maven infrastructure, environment configuration, documentation. |
+| **Backend & Database Engineer** | Relational schema design (`schema.sql`), JDBC connection pooling, DAO implementation. |
+| **Business Logic Specialist** | Business validations, stock bounds enforcement, financial valuation algorithms. |
+| **UI/UX Desktop Engineer** | Swing presentation layer, FlatLaf modern theming, CardLayout view transitions. |
+| **QA & Verification Engineer** | JUnit 5 unit testing, data integrity verification, manual test workflows. |
+
+---
+
+## 8. Version Control & Git Strategy
 
 - **Default Branch**: `main` (Production-ready and reviewed codebase).
-- **Feature Branches**: `feature/<feature-name>` (e.g., `feature/login-auth`, `feature/product-crud`).
-- **Commit Convention**: Conventional Commits (e.g., `feat: implement user authentication`, `fix: handle null product category`).
-
+- **Feature Branches**: `feature/<feature-name>` (e.g. `feature/login-auth`, `feature/inventory-service`).
+- **Commit Convention**: Conventional Commits (e.g. `feat: implement stock transaction dao`, `fix: handle null supplier id`).

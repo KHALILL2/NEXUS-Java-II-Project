@@ -1,52 +1,68 @@
 # =============================================================================
-# NEXUS IMS - .gitignore
-# Java / Maven / Gradle / VS Code / Antigravity IDE / Environment Configuration
+# NEXUS IMS - Comprehensive Production .gitignore
+# Java 17+ / Maven / FlatLaf / VS Code / IntelliJ / Windows OS / Database Caches
 # =============================================================================
 
-# Bytecode & Compiled Binaries
+# 1. Java Bytecode & Executable Binaries
 *.class
 *.war
 *.ear
 *.nar
 *.jar
+*.exe
+*.dll
+*.dylib
+*.so
 
-# Build Output Directories
+# 2. Build Tools Output Directories (Maven / Gradle / Ant)
 target/
 bin/
 out/
 build/
 dist/
+.gradle/
+.m2/repository/
 
-# Logs & Runtime Dumps
+# 3. Maven Wrapper Portable Binaries & Download Caches
+.mvn/wrapper/apache-maven-*/
+.mvn/wrapper/*.zip
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+
+# 4. Logs, Runtime Diagnostics, & Crash Dumps
 *.log
 logs/
 *.stackdump
 hs_err_pid*
 replay_pid*
+*.hprof
 
-# Environment & Sensitive Config
+# 5. Environment & Sensitive Credentials
 .env
 .env.*
 !.env.example
 secrets.properties
+credentials.json
 *.key
 *.pem
+*.p12
+*.jks
+*.keystore
+*.crt
+*.cer
 
-# IDE & Editor Specific Files
-## JetBrains IntelliJ IDEA
-.idea/
-*.iml
-*.iws
-*.ipr
-out/
+# 6. Database Backups, Dumps & Local SQLite Files
+*.sql.gz
+*.dump
+*.db
+*.sqlite
+*.sqlite3
 
-## Eclipse
-.metadata/
-.classpath
-.project
-.settings/
-*.launch
-
+# 7. IDE & Editor Specific Files
 ## VS Code & Antigravity IDE
 .vscode/*
 !.vscode/settings.json
@@ -56,26 +72,61 @@ out/
 .history/
 *.code-workspace
 
+## JetBrains (IntelliJ IDEA, PyCharm, etc.)
+.idea/
+*.iml
+*.iws
+*.ipr
+cmake-build-*/
+
+## Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+*.launch
+
 ## NetBeans
 nbproject/private/
-build/
 nbbuild/
-dist/
 nbdist/
 nbactions.xml
 nb-configuration.xml
 
-# Operating System Files
-.DS_Store
+# 8. Operating System Specific
+## Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
 desktop.ini
+$RECYCLE.BIN/
+*.lnk
 
-# Package Manager Caches & Wrappers
-.gradle/
-.mvn/wrapper/apache-maven-*/
-.mvn/wrapper/*.zip
-pom.xml.tag
-pom.xml.releaseBackup
-pom.xml.versionsBackup
-release.properties
+## macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
 
+## Linux
+*~
+.directory
+.Trash-*
+
+# 9. Test Reporting & Coverage Analysis
+jacoco.exec
+*.exec
+coverage/
+.nyc_output/
+test-output/
+
+# 10. Temporary & Backup Files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~
+*.orig
