@@ -31,12 +31,12 @@ public class ProductService {
     }
 
     public Optional<Product> getProductById(int id) throws SQLException {
-        return productDao.findById(id);
+        return Optional.ofNullable(productDao.findById(id));
     }
 
     public boolean createProduct(Product product) throws SQLException {
         validateProduct(product);
-        if (productDao.findBySku(product.getSku()).isPresent()) {
+        if (productDao.findBySku(product.getSku()) != null) {
             throw new IllegalArgumentException("Product with SKU '" + product.getSku() + "' already exists.");
         }
         return productDao.save(product);

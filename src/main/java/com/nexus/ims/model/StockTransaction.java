@@ -1,17 +1,35 @@
 package com.nexus.ims.model;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 /**
- * Domain entity recording changes to inventory levels (Audit Trail).
+ * Domain entity recording immutable changes to inventory stock levels (Audit Ledger).
  */
 public class StockTransaction {
+
     public enum TransactionType {
-        INBOUND_PURCHASE,
-        OUTBOUND_SALE,
-        ADJUSTMENT_DAMAGE,
-        ADJUSTMENT_COUNT,
-        RETURN_RESTOCK
+        INBOUND_PURCHASE(1, "Inbound shipment from supplier"),
+        OUTBOUND_SALE(-1, "Customer sale deduction"),
+        ADJUSTMENT_DAMAGE(-1, "Damaged stock write-off"),
+        ADJUSTMENT_COUNT(1, "Inventory physical count adjustment"),
+        RETURN_RESTOCK(1, "Customer returned restock");
+
+        private final int defaultSign;
+        private final String description;
+
+        TransactionType(int defaultSign, String description) {
+            this.defaultSign = defaultSign;
+            this.description = description;
+        }
+
+        public int getDefaultSign() {
+            return defaultSign;
+        }
+
+        public String getDescription() {
+            return description;
+        }
     }
 
     private int id;
@@ -19,42 +37,109 @@ public class StockTransaction {
     private TransactionType transactionType;
     private int quantityChange;
     private String notes;
-    private int performedByUserId;
-    private LocalDateTime timestamp;
+    private Integer performedByUserId;
+    private LocalDateTime createdAt;
 
     public StockTransaction() {}
 
-    public StockTransaction(int id, int productId, TransactionType transactionType, 
-                            int quantityChange, String notes, int performedByUserId, 
-                            LocalDateTime timestamp) {
-        this.id = id;
+    public StockTransaction(int productId, TransactionType transactionType, 
+                            int quantityChange, String notes, Integer performedByUserId) {
         this.productId = productId;
-        this.transactionType = transactionType;
-        this.quantityChange = quantityChange;
+        setTransactionType(transactionType);
+        setQuantityChange(quantityChange);
         this.notes = notes;
         this.performedByUserId = performedByUserId;
-        this.timestamp = timestamp;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public StockTransaction(int id, int productId, TransactionType transactionType, 
+                            int quantityChange, String notes, Integer performedByUserId, 
+                            LocalDateTime createdAt) {
+        this.id = id;
+        this.productId = productId;
+        setTransactionType(transactionType);
+        setQuantityChange(quantityChange);
+        this.notes = notes;
+        this.performedByUserId = performedByUserId;
+        this.createdAt = createdAt;
+    }
 
-    public int getProductId() { return productId; }
-    public void setProductId(int productId) { this.productId = productId; }
+    public int getId() {
+        return id;
+    }
 
-    public TransactionType getTransactionType() { return transactionType; }
-    public void setTransactionType(TransactionType transactionType) { this.transactionType = transactionType; }
+    public void setId(int id) {
+        this.id = id;
+    }
 
-    public int getQuantityChange() { return quantityChange; }
-    public void setQuantityChange(int quantityChange) { this.quantityChange = quantityChange; }
+    public int getProductId() {
+        return productId;
+    }
 
-    public String getNotes() { return notes; }
-    public void setNotes(String notes) { this.notes = notes; }
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
 
-    public int getPerformedByUserId() { return performedByUserId; }
-    public void setPerformedByUserId(int performedByUserId) { this.performedByUserId = performedByUserId; }
+    public TransactionType getTransactionType() {
+        return transactionType;
+    }
 
-    public LocalDateTime getTimestamp() { return timestamp; }
-    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    public void setTransactionType(TransactionType transactionType) {
+        if (transactionType == null) {
+            throw new IllegalArgumentException("Transaction type cannot be null.");
+        }
+        this.transactionType = transactionType;
+    }
+
+    public int getQuantityChange() {
+        return quantityChange;
+    }
+
+    public void setQuantityChange(int quantityChange) {
+        if (quantityChange == 0) {
+            throw new IllegalArgumentException("Quantity change cannot be zero.");
+        }
+        this.quantityChange = quantityChange;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public Integer getPerformedByUserId() {
+        return performedByUserId;
+    }
+
+    public void setPerformedByUserId(Integer performedByUserId) {
+        this.performedByUserId = performedByUserId;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof StockTransaction that)) return false;
+        return id == that.id && productId == that.productId;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, productId);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("StockTransaction [id=%d, productId=%d, type=%s, delta=%+d, notes='%s', time=%s]",
+                id, productId, transactionType, quantityChange, notes, createdAt);
+    }
 }
-

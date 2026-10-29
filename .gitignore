@@ -70,8 +70,10 @@ nb-configuration.xml
 Thumbs.db
 desktop.ini
 
-# Package Manager Caches
+# Package Manager Caches & Wrappers
 .gradle/
+.mvn/wrapper/apache-maven-*/
+.mvn/wrapper/*.zip
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup

@@ -2,17 +2,17 @@ package com.nexus.ims.controller;
 
 import com.nexus.ims.model.User;
 import com.nexus.ims.service.AuthService;
+import com.nexus.ims.view.DashboardFrame;
 import com.nexus.ims.view.LoginFrame;
-import com.nexus.ims.view.MainFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.Optional;
 
 /**
  * Controller handling user authentication flow and screen navigation.
+ * Validates credentials in the background to keep the UI responsive.
  */
 public class AuthController {
     private final LoginFrame loginFrame;
@@ -25,8 +25,8 @@ public class AuthController {
     }
 
     private void initController() {
-        loginFrame.getLoginButton().addActionListener(this::handleLogin);
-        loginFrame.getExitButton().addActionListener(e -> System.exit(0));
+        loginFrame.addLoginListener(this::handleLogin);
+        loginFrame.addExitListener(e -> System.exit(0));
     }
 
     private void handleLogin(ActionEvent e) {
@@ -34,28 +34,58 @@ public class AuthController {
         String password = new String(loginFrame.getPassword());
 
         if (username.isEmpty() || password.isEmpty()) {
-            loginFrame.showErrorMessage("Username and password must not be empty.");
+            loginFrame.setErrorMessage("Username and password must not be empty.");
             return;
         }
 
-        try {
-            Optional<User> userOpt = authService.authenticate(username, password);
-            if (userOpt.isPresent()) {
-                User user = userOpt.get();
-                loginFrame.dispose();
+        loginFrame.setLoading(true);
+        loginFrame.setErrorMessage(null);
 
-                // Open Main Dashboard
-                SwingUtilities.invokeLater(() -> {
-                    MainFrame mainFrame = new MainFrame(user);
-                    new ProductController(mainFrame);
-                    mainFrame.setVisible(true);
-                });
-            } else {
-                loginFrame.showErrorMessage("Invalid username or password.");
+        // Perform authentication asynchronously so the UI thread doesn't freeze
+        SwingWorker<Optional<User>, Void> authWorker = new SwingWorker<>() {
+            private String failureReason = null;
+
+            @Override
+            protected Optional<User> doInBackground() {
+                try {
+                    return authService.authenticate(username, password);
+                } catch (SQLException ex) {
+                    failureReason = "Database Error: " + ex.getMessage();
+                    return Optional.empty();
+                } catch (Exception ex) {
+                    failureReason = "Authentication failed: " + ex.getMessage();
+                    return Optional.empty();
+                }
             }
-        } catch (SQLException ex) {
-            loginFrame.showErrorMessage("Database connection error: " + ex.getMessage());
-        }
+
+            @Override
+            protected void done() {
+                loginFrame.setLoading(false);
+                try {
+                    Optional<User> userOpt = get();
+                    if (userOpt.isPresent()) {
+                        User user = userOpt.get();
+                        loginFrame.dispose();
+
+                        // Launch Dashboard Shell with Authenticated User
+                        SwingUtilities.invokeLater(() -> {
+                            DashboardFrame dashboardFrame = new DashboardFrame(user);
+                            new DashboardController(dashboardFrame);
+                            dashboardFrame.setVisible(true);
+                        });
+                    } else {
+                        if (failureReason != null) {
+                            loginFrame.setErrorMessage(failureReason);
+                        } else {
+                            loginFrame.setErrorMessage("Invalid credentials or inactive account.");
+                        }
+                    }
+                } catch (Exception ex) {
+                    loginFrame.setErrorMessage("System error during login: " + ex.getMessage());
+                }
+            }
+        };
+
+        authWorker.execute();
     }
 }
-
