@@ -1,0 +1,79 @@
+# =============================================================================
+# NEXUS IMS - .gitignore
+# Java / Maven / Gradle / VS Code / Antigravity IDE / Environment Configuration
+# =============================================================================
+
+# Bytecode & Compiled Binaries
+*.class
+*.war
+*.ear
+*.nar
+*.jar
+
+# Build Output Directories
+target/
+bin/
+out/
+build/
+dist/
+
+# Logs & Runtime Dumps
+*.log
+logs/
+*.stackdump
+hs_err_pid*
+replay_pid*
+
+# Environment & Sensitive Config
+.env
+.env.*
+!.env.example
+secrets.properties
+*.key
+*.pem
+
+# IDE & Editor Specific Files
+## JetBrains IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+## Eclipse
+.metadata/
+.classpath
+.project
+.settings/
+*.launch
+
+## VS Code & Antigravity IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.code-workspace
+
+## NetBeans
+nbproject/private/
+build/
+nbbuild/
+dist/
+nbdist/
+nbactions.xml
+nb-configuration.xml
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Package Manager Caches
+.gradle/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+release.properties
+
