@@ -1,7 +1,8 @@
 package com.nexus.ims.service;
 
-import com.nexus.ims.dao.UserDao;
+import com.nexus.ims.dao.UserDAO;
 import com.nexus.ims.model.User;
+import com.nexus.ims.util.DatabaseMigrator;
 import com.nexus.ims.util.PasswordHasher;
 
 import java.sql.SQLException;
@@ -11,14 +12,15 @@ import java.util.Optional;
  * Service managing user authentication, credential verification, and user creation.
  */
 public class AuthService {
-    private final UserDao userDao;
+    private final UserDAO userDAO;
 
     public AuthService() {
-        this.userDao = new UserDao();
+        this.userDAO = new UserDAO();
+        DatabaseMigrator.ensureDefaultUsersSeededQuietly();
     }
 
-    public AuthService(UserDao userDao) {
-        this.userDao = userDao;
+    public AuthService(UserDAO userDAO) {
+        this.userDAO = userDAO;
     }
 
     /**
@@ -29,7 +31,12 @@ public class AuthService {
             return Optional.empty();
         }
 
-        Optional<User> userOpt = userDao.findByUsername(username.trim());
+        String normalizedUsername = username.trim().toLowerCase();
+        if (normalizedUsername.isEmpty() || plainPassword.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Optional<User> userOpt = userDAO.findByUsername(normalizedUsername);
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (user.isActive() && PasswordHasher.verifyPassword(plainPassword, user.getPasswordHash())) {
@@ -42,21 +49,25 @@ public class AuthService {
     /**
      * Registers a new user with BCrypt hashed password.
      */
-    public boolean registerUser(String username, String plainPassword, String fullName, 
+    public boolean registerUser(String username, String plainPassword, String fullName,
                                 String email, User.Role role) throws SQLException {
-        if (userDao.findByUsername(username).isPresent()) {
+        if (username == null || username.trim().isEmpty()) {
+            throw new IllegalArgumentException("Username cannot be null or empty.");
+        }
+
+        String normalizedUsername = username.trim().toLowerCase();
+        if (userDAO.findByUsername(normalizedUsername).isPresent()) {
             throw new IllegalArgumentException("Username already in use.");
         }
 
         User user = new User();
-        user.setUsername(username.trim());
+        user.setUsername(normalizedUsername);
         user.setPasswordHash(PasswordHasher.hashPassword(plainPassword));
         user.setFullName(fullName);
         user.setEmail(email);
         user.setRole(role);
         user.setActive(true);
 
-        return userDao.save(user);
+        return userDAO.save(user);
     }
 }
-

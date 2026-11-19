@@ -13,8 +13,8 @@ import java.util.logging.Logger;
 /**
  * Robust JDBC implementation of BaseDAO for User entities.
  */
-public class UserDao implements BaseDAO<User> {
-    private static final Logger LOGGER = Logger.getLogger(UserDao.class.getName());
+public class UserDAO implements BaseDAO<User> {
+    private static final Logger LOGGER = Logger.getLogger(UserDAO.class.getName());
 
     @Override
     public boolean save(User user) {
@@ -139,6 +139,8 @@ public class UserDao implements BaseDAO<User> {
         user.setActive(rs.getBoolean("is_active"));
         Timestamp created = rs.getTimestamp("created_at");
         if (created != null) user.setCreatedAt(created.toLocalDateTime());
+        Timestamp updated = rs.getTimestamp("updated_at");
+        if (updated != null) user.setUpdatedAt(updated.toLocalDateTime());
         return user;
     }
 }
