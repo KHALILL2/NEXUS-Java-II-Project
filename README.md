@@ -43,13 +43,20 @@ Desktop inventory and stock ledger application built with Java 17, Swing (FlatLa
 # Compile and run unit tests
 .\mvnw.cmd clean test
 
-# Launch the desktop client
+# Launch the desktop client via Maven
 .\mvnw.cmd exec:java
-
-# Build shaded executable JAR
-.\mvnw.cmd clean package
-java -jar target/nexus-inventory-management-1.0.0-SNAPSHOT.jar
 ```
+
+### Standalone Executable JAR
+
+Build a self-contained Fat JAR (`target\nexus-ims-1.0.0-shaded.jar`) with Maven Shade:
+
+```powershell
+.\mvnw.cmd clean package
+java -jar target\nexus-ims-1.0.0-shaded.jar
+```
+
+On Windows, double-click **`Run-NEXUS-IMS.bat`** after packaging to launch the desktop GUI without leaving a console window open.
 
 ## Default Accounts & Permissions
 
@@ -65,6 +72,7 @@ java -jar target/nexus-inventory-management-1.0.0-SNAPSHOT.jar
 ├── .gitignore
 ├── CHANGELOG.md
 ├── README.md
+├── Run-NEXUS-IMS.bat
 ├── mvnw.cmd
 ├── pom.xml
 └── src/
