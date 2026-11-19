@@ -10,8 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Data Access Object managing Stock Transactions with strict ACID compliance.
- * Guarantees atomic updates across stock_transactions and products tables.
+ * JDBC DAO for inventory stock movements. Executes balance updates and audit
+ * logging within a single database transaction guarded by SELECT ... FOR UPDATE.
  */
 public class StockTransactionDAO implements BaseDAO<StockTransaction> {
     private static final Logger LOGGER = Logger.getLogger(StockTransactionDAO.class.getName());

@@ -4,15 +4,18 @@ import com.nexus.ims.model.Category;
 import com.nexus.ims.model.Product;
 import com.nexus.ims.model.Supplier;
 import com.nexus.ims.util.IconFactory;
+import com.nexus.ims.util.LanguageManager;
+import com.nexus.ims.util.ThemeManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * Modal FlatLaf dialog supporting both creating a new Product and editing an existing Product.
+ * Modal form dialog for creating or editing a catalog product.
  */
 public class ProductFormDialog extends JDialog {
     private final Product existingProduct;
@@ -32,12 +35,15 @@ public class ProductFormDialog extends JDialog {
     public ProductFormDialog(Frame owner, Product existingProduct,
                              List<Category> categories, List<Supplier> suppliers) {
         super(owner,
-              existingProduct == null ? "Add New Product" : "Edit Product - " + existingProduct.getSku(),
+              existingProduct == null
+                      ? LanguageManager.get("products.dialog.addTitle")
+                      : LanguageManager.format("products.dialog.editTitleFormat", existingProduct.getSku()),
               true);
         this.existingProduct = existingProduct;
 
         initComponents(categories, suppliers);
         populateExistingData();
+        LanguageManager.applyOrientation(this);
         pack();
         setMinimumSize(new Dimension(520, 560));
         setLocationRelativeTo(owner);
@@ -47,31 +53,30 @@ public class ProductFormDialog extends JDialog {
     private void initComponents(List<Category> categories, List<Supplier> suppliers) {
         JPanel root = new JPanel(new BorderLayout(12, 12));
         root.setBorder(new EmptyBorder(18, 20, 16, 20));
-        root.setBackground(Color.WHITE);
+        root.setBackground(ThemeManager.bgSurface());
 
-        // Inline Error Banner
         errorLabel = new JLabel(" ");
         errorLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        errorLabel.setForeground(new Color(220, 53, 69));
+        errorLabel.setForeground(ThemeManager.accentDanger());
+        errorLabel.setHorizontalAlignment(SwingConstants.LEADING);
         root.add(errorLabel, BorderLayout.NORTH);
 
-        // Form Fields Grid
         JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setOpaque(false);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.LINE_START;
 
         int row = 0;
 
         skuField = new JTextField(22);
-        skuField.putClientProperty("JTextField.placeholderText", "e.g. DELL-LAT-5540");
-        addFormRow(formPanel, gbc, row++, "SKU *:", skuField);
+        skuField.putClientProperty("JTextField.placeholderText", LanguageManager.get("products.form.skuPlaceholder"));
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("products.form.sku") + " *:", skuField);
 
         nameField = new JTextField(22);
-        nameField.putClientProperty("JTextField.placeholderText", "Product display name");
-        addFormRow(formPanel, gbc, row++, "Product Name *:", nameField);
+        nameField.putClientProperty("JTextField.placeholderText", LanguageManager.get("products.form.namePlaceholder"));
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("products.form.name") + " *:", nameField);
 
         categoryCombo = new JComboBox<>();
         categoryCombo.addItem(null);
@@ -84,16 +89,17 @@ public class ProductFormDialog extends JDialog {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Category c) {
-                    setText(c.getName());
+                    label.setText(c.getName());
                 } else {
-                    setText("-- Unassigned --");
+                    label.setText("-- " + LanguageManager.get("common.unassigned") + " --");
                 }
-                return this;
+                label.setHorizontalAlignment(SwingConstants.LEADING);
+                return label;
             }
         });
-        addFormRow(formPanel, gbc, row++, "Category:", categoryCombo);
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("products.form.category") + ":", categoryCombo);
 
         supplierCombo = new JComboBox<>();
         supplierCombo.addItem(null);
@@ -106,28 +112,32 @@ public class ProductFormDialog extends JDialog {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Supplier s) {
-                    setText(s.getName());
+                    label.setText(s.getName());
                 } else {
-                    setText("-- Unassigned --");
+                    label.setText("-- " + LanguageManager.get("common.unassigned") + " --");
                 }
-                return this;
+                label.setHorizontalAlignment(SwingConstants.LEADING);
+                return label;
             }
         });
-        addFormRow(formPanel, gbc, row++, "Supplier:", supplierCombo);
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("products.form.supplier") + ":", supplierCombo);
 
         purchasePriceField = new JTextField("0.00", 12);
-        addFormRow(formPanel, gbc, row++, "Purchase Cost ($) *:", purchasePriceField);
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("products.form.costPrice") + " *:", purchasePriceField);
 
         unitPriceField = new JTextField("0.00", 12);
-        addFormRow(formPanel, gbc, row++, "Unit Selling Price ($) *:", unitPriceField);
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("products.form.sellingPrice") + " *:", unitPriceField);
 
         quantitySpinner = new JSpinner(new SpinnerNumberModel(0, 0, 1_000_000, 1));
-        addFormRow(formPanel, gbc, row++, existingProduct == null ? "Initial Stock Qty *:" : "Current Stock Qty *:", quantitySpinner);
+        String qtyLabel = existingProduct == null
+                ? LanguageManager.get("products.form.initialStock") + " *:"
+                : LanguageManager.get("products.form.currentStock") + " *:";
+        addFormRow(formPanel, gbc, row++, qtyLabel, quantitySpinner);
 
         reorderLevelSpinner = new JSpinner(new SpinnerNumberModel(10, 0, 100_000, 1));
-        addFormRow(formPanel, gbc, row++, "Reorder Threshold *:", reorderLevelSpinner);
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("products.form.minThreshold") + " *:", reorderLevelSpinner);
 
         descriptionArea = new JTextArea(3, 22);
         descriptionArea.setLineWrap(true);
@@ -136,9 +146,11 @@ public class ProductFormDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0.0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        JLabel descLabel = new JLabel("Description:");
+        gbc.anchor = GridBagConstraints.FIRST_LINE_START;
+        JLabel descLabel = new JLabel(LanguageManager.get("products.form.description") + ":");
         descLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        descLabel.setForeground(ThemeManager.textSecondary());
+        descLabel.setHorizontalAlignment(SwingConstants.LEADING);
         formPanel.add(descLabel, gbc);
 
         gbc.gridx = 1;
@@ -149,19 +161,22 @@ public class ProductFormDialog extends JDialog {
 
         root.add(formPanel, BorderLayout.CENTER);
 
-        // Action Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 10, 0));
         buttonPanel.setOpaque(false);
 
-        JButton cancelButton = new JButton("Cancel");
+        JButton cancelButton = new JButton(LanguageManager.get("common.cancel"));
+        cancelButton.setBackground(ThemeManager.btnSecondaryBg());
+        cancelButton.setForeground(ThemeManager.btnSecondaryFg());
         cancelButton.addActionListener(e -> {
             confirmed = false;
             dispose();
         });
 
-        JButton saveButton = new JButton(existingProduct == null ? "Save Product" : "Update Product");
+        JButton saveButton = new JButton(existingProduct == null
+                ? LanguageManager.get("products.form.save")
+                : LanguageManager.get("products.form.update"));
         saveButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        saveButton.setBackground(new Color(13, 110, 253));
+        saveButton.setBackground(ThemeManager.accentPrimary());
         saveButton.setForeground(Color.WHITE);
         saveButton.addActionListener(e -> handleSave());
 
@@ -171,6 +186,14 @@ public class ProductFormDialog extends JDialog {
 
         setContentPane(root);
         getRootPane().setDefaultButton(saveButton);
+        getRootPane().registerKeyboardAction(
+                e -> {
+                    confirmed = false;
+                    dispose();
+                },
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String labelText, JComponent field) {
@@ -179,11 +202,12 @@ public class ProductFormDialog extends JDialog {
         gbc.weightx = 0.0;
         gbc.weighty = 0.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.LINE_START;
 
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        label.setForeground(new Color(73, 80, 87));
+        label.setForeground(ThemeManager.textSecondary());
+        label.setHorizontalAlignment(SwingConstants.LEADING);
         panel.add(label, gbc);
 
         gbc.gridx = 1;
@@ -231,12 +255,12 @@ public class ProductFormDialog extends JDialog {
         String name = nameField.getText().trim();
 
         if (sku.isEmpty()) {
-            showValidationError("SKU is required.");
+            showValidationError(LanguageManager.get("products.form.validation.skuRequired"));
             skuField.requestFocusInWindow();
             return;
         }
         if (name.isEmpty()) {
-            showValidationError("Product Name is required.");
+            showValidationError(LanguageManager.get("products.form.validation.nameRequired"));
             nameField.requestFocusInWindow();
             return;
         }
@@ -245,11 +269,11 @@ public class ProductFormDialog extends JDialog {
         try {
             purchasePrice = new BigDecimal(purchasePriceField.getText().trim());
             if (purchasePrice.compareTo(BigDecimal.ZERO) < 0) {
-                showValidationError("Purchase cost must be non-negative.");
+                showValidationError(LanguageManager.get("products.form.validation.purchaseNonNeg"));
                 return;
             }
         } catch (NumberFormatException ex) {
-            showValidationError("Purchase cost must be a valid decimal number.");
+            showValidationError(LanguageManager.get("products.form.validation.purchaseInvalid"));
             purchasePriceField.requestFocusInWindow();
             return;
         }
@@ -258,11 +282,11 @@ public class ProductFormDialog extends JDialog {
         try {
             unitPrice = new BigDecimal(unitPriceField.getText().trim());
             if (unitPrice.compareTo(BigDecimal.ZERO) < 0) {
-                showValidationError("Unit selling price must be non-negative.");
+                showValidationError(LanguageManager.get("products.form.validation.unitNonNeg"));
                 return;
             }
         } catch (NumberFormatException ex) {
-            showValidationError("Unit selling price must be a valid decimal number.");
+            showValidationError(LanguageManager.get("products.form.validation.unitInvalid"));
             unitPriceField.requestFocusInWindow();
             return;
         }
@@ -272,8 +296,9 @@ public class ProductFormDialog extends JDialog {
     }
 
     private void showValidationError(String msg) {
-        errorLabel.setIcon(IconFactory.alert(15, new Color(220, 53, 69)));
+        errorLabel.setIcon(IconFactory.alert(15, ThemeManager.accentDanger()));
         errorLabel.setIconTextGap(6);
+        errorLabel.setForeground(ThemeManager.accentDanger());
         errorLabel.setText(msg);
     }
 
@@ -281,9 +306,6 @@ public class ProductFormDialog extends JDialog {
         return confirmed;
     }
 
-    /**
-     * Builds a Product object populated from the validated dialog form fields.
-     */
     public Product getProduct() {
         Product product = existingProduct != null ? existingProduct : new Product();
         product.setSku(skuField.getText().trim().toUpperCase());

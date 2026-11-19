@@ -11,8 +11,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Production-grade Data Access Object for the Product entity.
- * Implements BaseDAO with PreparedStatements and custom inventory retrieval queries.
+ * JDBC Data Access Object for catalog products, SKU lookups, and reorder queries.
  */
 public class ProductDAO implements BaseDAO<Product> {
     private static final Logger LOGGER = Logger.getLogger(ProductDAO.class.getName());
@@ -111,10 +110,6 @@ public class ProductDAO implements BaseDAO<Product> {
             LOGGER.log(Level.SEVERE, "Failed to delete product ID: " + id, e);
             return false;
         }
-    }
-
-    public boolean deleteById(int id) {
-        return delete(id);
     }
 
     @Override

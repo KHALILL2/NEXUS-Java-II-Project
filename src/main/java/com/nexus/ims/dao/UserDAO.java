@@ -2,6 +2,7 @@ package com.nexus.ims.dao;
 
 import com.nexus.ims.model.User;
 import com.nexus.ims.util.DatabaseConnection;
+import com.nexus.ims.util.PasswordHasher;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -11,21 +12,37 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Robust JDBC implementation of BaseDAO for User entities.
+ * JDBC Data Access Object for system operator accounts and BCrypt credential updates.
  */
 public class UserDAO implements BaseDAO<User> {
     private static final Logger LOGGER = Logger.getLogger(UserDAO.class.getName());
 
     @Override
     public boolean save(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+        String rawOrHashed = user.getPasswordHash();
+        if (rawOrHashed == null || rawOrHashed.trim().isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be empty.");
+        }
+        String hashedPassword = isBcryptHash(rawOrHashed)
+                ? rawOrHashed
+                : PasswordHasher.hashPassword(rawOrHashed);
+        user.setPasswordHash(hashedPassword);
+
+        String email = (user.getEmail() != null && !user.getEmail().trim().isEmpty())
+                ? user.getEmail().trim().toLowerCase()
+                : user.getUsername() + "@nexus.local";
+
         String sql = "INSERT INTO users (username, password_hash, full_name, email, role, is_active) " +
                      "VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getPasswordHash());
+            stmt.setString(2, hashedPassword);
             stmt.setString(3, user.getFullName());
-            stmt.setString(4, user.getEmail());
+            stmt.setString(4, email);
             stmt.setString(5, user.getRole().name());
             stmt.setBoolean(6, user.isActive());
 
@@ -46,11 +63,18 @@ public class UserDAO implements BaseDAO<User> {
 
     @Override
     public boolean update(User user) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+        String email = (user.getEmail() != null && !user.getEmail().trim().isEmpty())
+                ? user.getEmail().trim().toLowerCase()
+                : user.getUsername() + "@nexus.local";
+
         String sql = "UPDATE users SET full_name = ?, email = ?, role = ?, is_active = ? WHERE id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, user.getFullName());
-            stmt.setString(2, user.getEmail());
+            stmt.setString(2, email);
             stmt.setString(3, user.getRole().name());
             stmt.setBoolean(4, user.isActive());
             stmt.setInt(5, user.getId());
@@ -60,6 +84,30 @@ public class UserDAO implements BaseDAO<User> {
             LOGGER.log(Level.SEVERE, "Error updating user ID: " + user.getId(), e);
             return false;
         }
+    }
+
+    /**
+     * Hashes a new plaintext password with BCrypt and updates the user's password_hash.
+     */
+    public boolean updatePassword(int userId, String newPlainPassword) {
+        if (newPlainPassword == null || newPlainPassword.isEmpty()) {
+            throw new IllegalArgumentException("New password cannot be empty.");
+        }
+        String hashed = PasswordHasher.hashPassword(newPlainPassword);
+        String sql = "UPDATE users SET password_hash = ? WHERE id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, hashed);
+            stmt.setInt(2, userId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error updating password for user ID: " + userId, e);
+            return false;
+        }
+    }
+
+    private boolean isBcryptHash(String candidate) {
+        return candidate.startsWith("$2a$") || candidate.startsWith("$2b$") || candidate.startsWith("$2y$");
     }
 
     @Override
@@ -73,10 +121,6 @@ public class UserDAO implements BaseDAO<User> {
             LOGGER.log(Level.SEVERE, "Error deleting user ID: " + id, e);
             return false;
         }
-    }
-
-    public boolean deleteById(int id) {
-        return delete(id);
     }
 
     @Override

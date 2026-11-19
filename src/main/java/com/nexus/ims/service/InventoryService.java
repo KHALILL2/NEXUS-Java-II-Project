@@ -6,12 +6,12 @@ import com.nexus.ims.model.Product;
 import com.nexus.ims.model.StockTransaction;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
 /**
- * Core business logic service handling inventory rules, valuation, and transaction flow.
+ * Inventory domain service enforcing stock constraints, atomic transaction dispatch,
+ * low-stock threshold checks, and warehouse cost valuation.
  */
 public class InventoryService {
     private static final Logger LOGGER = Logger.getLogger(InventoryService.class.getName());
@@ -199,15 +199,10 @@ public class InventoryService {
         return categoryTotal;
     }
 
-    /**
-     * Emits a formatted low-stock alert log when a threshold breach is detected.
-     */
     private void triggerLowStockWarning(Product product, int currentStock) {
-        String warning = String.format(
-                "[ALERT - LOW STOCK] Product '%s' (SKU: %s) has dropped to %d units (Reorder Threshold: %d)!",
-                product.getName(), product.getSku(), currentStock, product.getReorderLevel());
-        LOGGER.warning(warning);
-        System.err.println(warning);
+        LOGGER.warning(String.format(
+                "Low stock alert: '%s' (SKU: %s) dropped to %d units (threshold: %d)",
+                product.getName(), product.getSku(), currentStock, product.getReorderLevel()));
     }
 
     private Product getProductOrThrow(int productId) {

@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Domain entity recording immutable changes to inventory stock levels (Audit Ledger).
+ * Immutable audit ledger entry recording an inbound, outbound, or adjusted stock movement.
  */
 public class StockTransaction {
 

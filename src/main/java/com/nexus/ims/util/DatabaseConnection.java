@@ -10,8 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Thread-safe Singleton managing JDBC connections to the MySQL database.
- * Loads configuration from 'db.properties' in the classpath.
+ * Singleton factory for MySQL JDBC connections configured via db.properties.
  */
 public class DatabaseConnection {
     private static final Logger LOGGER = Logger.getLogger(DatabaseConnection.class.getName());
@@ -26,10 +25,7 @@ public class DatabaseConnection {
     }
 
     /**
-     * Retrieves the Singleton instance using Double-Checked Locking (DCL)
-     * for optimal thread safety and performance.
-     *
-     * @return the singleton DatabaseConnection instance
+     * Thread-safe singleton accessor via double-checked locking.
      */
     public static DatabaseConnection getInstance() {
         if (instance == null) {
@@ -42,9 +38,6 @@ public class DatabaseConnection {
         return instance;
     }
 
-    /**
-     * Loads the JDBC configuration properties file from classpath.
-     */
     private void loadProperties() {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(CONFIG_FILE)) {
             if (inputStream == null) {
@@ -60,9 +53,6 @@ public class DatabaseConnection {
         }
     }
 
-    /**
-     * Registers the JDBC driver specified in properties.
-     */
     private void registerDriver() {
         String driver = properties.getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
         try {
@@ -74,12 +64,6 @@ public class DatabaseConnection {
         }
     }
 
-    /**
-     * Establishes and returns a new active database connection.
-     *
-     * @return an active java.sql.Connection
-     * @throws SQLException if a connection cannot be established
-     */
     public Connection createConnection() throws SQLException {
         String url = properties.getProperty("db.url");
         String username = properties.getProperty("db.username");
@@ -99,21 +83,10 @@ public class DatabaseConnection {
         }
     }
 
-    /**
-     * Static convenience delegate for obtaining a database connection.
-     *
-     * @return active java.sql.Connection
-     * @throws SQLException if connection fails
-     */
     public static Connection getConnection() throws SQLException {
         return getInstance().createConnection();
     }
 
-    /**
-     * Safely closes an active database connection.
-     *
-     * @param connection Connection to close
-     */
     public static void closeConnection(Connection connection) {
         if (connection != null) {
             try {

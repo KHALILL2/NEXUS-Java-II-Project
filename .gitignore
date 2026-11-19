@@ -1,47 +1,33 @@
-# =============================================================================
-# NEXUS IMS - Comprehensive Production .gitignore
-# Java 17+ / Maven / FlatLaf / VS Code / IntelliJ / Windows OS / Database Caches
-# =============================================================================
-
-# 1. Java Bytecode & Executable Binaries
+# Maven Build & Java Outputs
+target/
 *.class
+*.jar
 *.war
 *.ear
 *.nar
-*.jar
-*.exe
-*.dll
-*.dylib
-*.so
-
-# 2. Build Tools Output Directories (Maven / Gradle / Ant)
-target/
-bin/
-out/
-build/
-dist/
-.gradle/
-.m2/repository/
-
-# 3. Maven Wrapper Portable Binaries & Download Caches
-.mvn/wrapper/apache-maven-*/
-.mvn/wrapper/*.zip
+dependency-reduced-pom.xml
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 pom.xml.next
 release.properties
-dependency-reduced-pom.xml
+.mvn/wrapper/apache-maven-*/
+.mvn/wrapper/*.zip
 
-# 4. Logs, Runtime Diagnostics, & Crash Dumps
+# Runtime Logs, Reports & Java Crash Dumps
 *.log
 logs/
 *.stackdump
 hs_err_pid*
 replay_pid*
 *.hprof
+nexus-inventory-report-*
+*.pdf
+*.xlsx
+*.csv
+!src/**/*.csv
 
-# 5. Environment & Sensitive Credentials
+# Sensitive Configuration & Keys
 .env
 .env.*
 !.env.example
@@ -55,78 +41,42 @@ credentials.json
 *.crt
 *.cer
 
-# 6. Database Backups, Dumps & Local SQLite Files
-*.sql.gz
-*.dump
-*.db
-*.sqlite
-*.sqlite3
-
-# 7. IDE & Editor Specific Files
-## VS Code & Antigravity IDE
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/
-*.code-workspace
-
-## JetBrains (IntelliJ IDEA, PyCharm, etc.)
+# IDE & Editor Metadata
+.vscode/
 .idea/
 *.iml
 *.iws
 *.ipr
-cmake-build-*/
-
-## Eclipse
-.metadata/
+*.code-workspace
+.history/
 .classpath
 .project
 .settings/
 *.launch
-
-## NetBeans
 nbproject/private/
 nbbuild/
 nbdist/
 nbactions.xml
 nb-configuration.xml
 
-# 8. Operating System Specific
-## Windows
+# OS Files
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
 ehthumbs_vista.db
+Desktop.ini
 desktop.ini
 $RECYCLE.BIN/
 *.lnk
-
-## macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 Icon?
 ._*
-
-## Linux
 *~
-.directory
-.Trash-*
-
-# 9. Test Reporting & Coverage Analysis
-jacoco.exec
-*.exec
-coverage/
-.nyc_output/
-test-output/
-
-# 10. Temporary & Backup Files
+*.swp
+*.swo
 *.tmp
 *.temp
 *.bak
-*.swp
-*.swo
-*~
 *.orig

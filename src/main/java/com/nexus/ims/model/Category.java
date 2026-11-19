@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Domain entity representing an inventory classification category.
+ * Inventory classification category entity.
  */
 public class Category {
     private int id;

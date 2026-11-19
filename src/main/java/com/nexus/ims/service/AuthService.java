@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 /**
- * Service managing user authentication, credential verification, and user creation.
+ * Handles user login verification and account registration.
  */
 public class AuthService {
     private final UserDAO userDAO;

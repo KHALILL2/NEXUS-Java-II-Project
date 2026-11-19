@@ -2,6 +2,7 @@ package com.nexus.ims.controller;
 
 import com.nexus.ims.model.User;
 import com.nexus.ims.service.AuthService;
+import com.nexus.ims.util.LanguageManager;
 import com.nexus.ims.view.DashboardFrame;
 import com.nexus.ims.view.LoginFrame;
 
@@ -34,14 +35,13 @@ public class AuthController {
         String password = new String(loginFrame.getPassword());
 
         if (username.isEmpty() || password.isEmpty()) {
-            loginFrame.setErrorMessage("Username and password must not be empty.");
+            loginFrame.setErrorMessage(LanguageManager.get("login.error.empty"));
             return;
         }
 
         loginFrame.setLoading(true);
         loginFrame.setErrorMessage(null);
 
-        // Perform authentication asynchronously so the UI thread doesn't freeze
         SwingWorker<Optional<User>, Void> authWorker = new SwingWorker<>() {
             private String failureReason = null;
 
@@ -50,10 +50,10 @@ public class AuthController {
                 try {
                     return authService.authenticate(username, password);
                 } catch (SQLException ex) {
-                    failureReason = "Database Error: " + ex.getMessage();
+                    failureReason = LanguageManager.get("login.error.db") + " (" + ex.getMessage() + ")";
                     return Optional.empty();
                 } catch (Exception ex) {
-                    failureReason = "Authentication failed: " + ex.getMessage();
+                    failureReason = LanguageManager.get("login.error.invalid") + " (" + ex.getMessage() + ")";
                     return Optional.empty();
                 }
             }
@@ -67,7 +67,6 @@ public class AuthController {
                         User user = userOpt.get();
                         loginFrame.dispose();
 
-                        // Launch Dashboard Shell with Authenticated User
                         SwingUtilities.invokeLater(() -> {
                             DashboardFrame dashboardFrame = new DashboardFrame(user);
                             new DashboardController(dashboardFrame);
@@ -77,11 +76,11 @@ public class AuthController {
                         if (failureReason != null) {
                             loginFrame.setErrorMessage(failureReason);
                         } else {
-                            loginFrame.setErrorMessage("Invalid credentials or inactive account.");
+                            loginFrame.setErrorMessage(LanguageManager.get("login.error.invalid"));
                         }
                     }
                 } catch (Exception ex) {
-                    loginFrame.setErrorMessage("System error during login: " + ex.getMessage());
+                    loginFrame.setErrorMessage(LanguageManager.get("login.error.db") + " (" + ex.getMessage() + ")");
                 }
             }
         };

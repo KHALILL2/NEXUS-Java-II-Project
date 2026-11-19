@@ -1,6 +1,10 @@
 package com.nexus.ims.view;
 
 import com.nexus.ims.util.IconFactory;
+import com.nexus.ims.util.LanguageManager;
+import com.nexus.ims.util.LanguageManager.Language;
+import com.nexus.ims.util.ThemeManager;
+import com.nexus.ims.util.ThemeManager.ThemeMode;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -8,107 +12,183 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 
 /**
- * Modern authentication window for the NEXUS Inventory Management System.
- * Uses crisp Java2D vector icons and displays distinct feedback for DB vs credential errors.
+ * Authentication window with theme/language selectors and EN/AR RTL support.
  */
 public class LoginFrame extends JFrame {
+    private JPanel rootPanel;
+    private JPanel headerPanel;
+    private JPanel formContainer;
+    private JPanel footerPanel;
+
+    private JLabel logoBadge;
+    private JLabel subtitleLabel;
+    private JLabel errorLabel;
+    private JLabel usernamePrompt;
+    private JLabel passwordPrompt;
+    private JLabel footerLabel;
+
+    private JComboBox<ThemeMode> themeCombo;
+    private JComboBox<Language> languageCombo;
+
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JCheckBox showPasswordCheckbox;
     private JButton loginButton;
     private JButton exitButton;
-    private JLabel errorLabel;
     private JProgressBar progressBar;
+
+    private String lastErrorMessage = null;
+    private boolean updatingControls = false;
+
+    private final Runnable themeListener = this::applyThemeAndLanguage;
+    private final Runnable languageListener = this::applyThemeAndLanguage;
 
     public LoginFrame() {
         initComponents();
+        ThemeManager.addThemeListener(themeListener);
+        LanguageManager.addLanguageListener(languageListener);
+        applyThemeAndLanguage();
     }
 
     private void initComponents() {
-        setTitle("NEXUS IMS - Secure Login");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(450, 540);
+        setSize(460, 585);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        JPanel rootPanel = new JPanel(new BorderLayout());
-        rootPanel.setBackground(new Color(248, 249, 250));
+        rootPanel = new JPanel(new BorderLayout());
 
-        // Branded Header Panel
-        JPanel headerPanel = new JPanel();
-        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
-        headerPanel.setBackground(new Color(24, 28, 36));
-        headerPanel.setBorder(new EmptyBorder(32, 28, 28, 28));
+        // Branded Header Panel with Quick Theme + Language Bar
+        headerPanel = new JPanel(new BorderLayout(0, 14));
+        headerPanel.setBorder(new EmptyBorder(14, 18, 24, 18));
 
-        JLabel logoBadge = new JLabel("NEXUS IMS", SwingConstants.CENTER);
-        logoBadge.setIcon(IconFactory.brandLogo(28, new Color(59, 130, 246)));
+        JPanel topControlsBar = new JPanel(new FlowLayout(FlowLayout.TRAILING, 8, 0));
+        topControlsBar.setOpaque(false);
+
+        themeCombo = new JComboBox<>(ThemeMode.values());
+        themeCombo.setPreferredSize(new Dimension(115, 28));
+        themeCombo.setFocusable(false);
+        themeCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof ThemeMode mode) {
+                    label.setText(getThemeModeLabel(mode));
+                    Color iconColor = isSelected ? Color.WHITE : ThemeManager.textPrimary();
+                    label.setIcon(ThemeManager.modeIcon(mode, 14, iconColor));
+                    label.setIconTextGap(6);
+                }
+                label.setHorizontalAlignment(SwingConstants.LEADING);
+                return label;
+            }
+        });
+        themeCombo.addActionListener(e -> {
+            if (!updatingControls && themeCombo.getSelectedItem() instanceof ThemeMode mode) {
+                ThemeManager.setMode(mode);
+            }
+        });
+
+        languageCombo = new JComboBox<>(Language.values());
+        languageCombo.setPreferredSize(new Dimension(108, 28));
+        languageCombo.setFocusable(false);
+        languageCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Language lang) {
+                    label.setText(lang.getDisplayName());
+                    Color iconColor = isSelected ? Color.WHITE : ThemeManager.accentPrimary();
+                    label.setIcon(IconFactory.globe(14, iconColor));
+                    label.setIconTextGap(6);
+                }
+                label.setHorizontalAlignment(SwingConstants.LEADING);
+                return label;
+            }
+        });
+        languageCombo.addActionListener(e -> {
+            if (!updatingControls && languageCombo.getSelectedItem() instanceof Language lang) {
+                LanguageManager.setLanguage(lang);
+            }
+        });
+
+        topControlsBar.add(themeCombo);
+        topControlsBar.add(languageCombo);
+        headerPanel.add(topControlsBar, BorderLayout.NORTH);
+
+        JPanel brandCenter = new JPanel();
+        brandCenter.setOpaque(false);
+        brandCenter.setLayout(new BoxLayout(brandCenter, BoxLayout.Y_AXIS));
+
+        logoBadge = new JLabel("", SwingConstants.CENTER);
         logoBadge.setIconTextGap(12);
         logoBadge.setFont(new Font("Segoe UI", Font.BOLD, 22));
         logoBadge.setForeground(Color.WHITE);
         logoBadge.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel subtitleLabel = new JLabel("Enterprise Inventory Management System", SwingConstants.CENTER);
+        subtitleLabel = new JLabel("", SwingConstants.CENTER);
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        subtitleLabel.setForeground(new Color(148, 163, 184));
+        subtitleLabel.setForeground(ThemeManager.sidebarTextMuted());
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        headerPanel.add(logoBadge);
-        headerPanel.add(Box.createVerticalStrut(8));
-        headerPanel.add(subtitleLabel);
+        brandCenter.add(logoBadge);
+        brandCenter.add(Box.createVerticalStrut(6));
+        brandCenter.add(subtitleLabel);
+        headerPanel.add(brandCenter, BorderLayout.CENTER);
+
         rootPanel.add(headerPanel, BorderLayout.NORTH);
 
-        // Form Body Panel
-        JPanel formContainer = new JPanel();
-        formContainer.setLayout(new BoxLayout(formContainer, BoxLayout.Y_AXIS));
-        formContainer.setBackground(Color.WHITE);
-        formContainer.setBorder(new EmptyBorder(24, 36, 20, 36));
+        // Form Body Panel using GridBagLayout for automatic LTR/RTL alignment
+        formContainer = new JPanel(new GridBagLayout());
+        formContainer.setBorder(new EmptyBorder(20, 36, 18, 36));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.weightx = 1.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.LINE_START;
 
         errorLabel = new JLabel(" ");
         errorLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        errorLabel.setForeground(new Color(220, 53, 69));
         errorLabel.setIconTextGap(8);
-        errorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        errorLabel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        formContainer.add(errorLabel);
-        formContainer.add(Box.createVerticalStrut(10));
+        errorLabel.setPreferredSize(new Dimension(100, 32));
+        errorLabel.setHorizontalAlignment(SwingConstants.LEADING);
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        formContainer.add(errorLabel, gbc);
 
-        JLabel usernamePrompt = new JLabel("Username");
+        usernamePrompt = new JLabel();
         usernamePrompt.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        usernamePrompt.setForeground(new Color(73, 80, 87));
-        usernamePrompt.setAlignmentX(Component.LEFT_ALIGNMENT);
+        usernamePrompt.setHorizontalAlignment(SwingConstants.LEADING);
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 6, 0);
+        formContainer.add(usernamePrompt, gbc);
 
         usernameField = new JTextField();
         usernameField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        usernameField.putClientProperty("JTextField.placeholderText", "Enter your username");
-        usernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        usernameField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        usernameField.setPreferredSize(new Dimension(100, 40));
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 16, 0);
+        formContainer.add(usernameField, gbc);
 
-        formContainer.add(usernamePrompt);
-        formContainer.add(Box.createVerticalStrut(6));
-        formContainer.add(usernameField);
-        formContainer.add(Box.createVerticalStrut(16));
-
-        JLabel passwordPrompt = new JLabel("Password");
+        passwordPrompt = new JLabel();
         passwordPrompt.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        passwordPrompt.setForeground(new Color(73, 80, 87));
-        passwordPrompt.setAlignmentX(Component.LEFT_ALIGNMENT);
+        passwordPrompt.setHorizontalAlignment(SwingConstants.LEADING);
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 6, 0);
+        formContainer.add(passwordPrompt, gbc);
 
         passwordField = new JPasswordField();
         passwordField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        passwordField.putClientProperty("JTextField.placeholderText", "Enter your password");
-        passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        passwordField.setAlignmentX(Component.LEFT_ALIGNMENT);
+        passwordField.setPreferredSize(new Dimension(100, 40));
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        formContainer.add(passwordField, gbc);
 
-        formContainer.add(passwordPrompt);
-        formContainer.add(Box.createVerticalStrut(6));
-        formContainer.add(passwordField);
-        formContainer.add(Box.createVerticalStrut(10));
-
-        showPasswordCheckbox = new JCheckBox("Show Password");
+        showPasswordCheckbox = new JCheckBox();
         showPasswordCheckbox.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        showPasswordCheckbox.setForeground(new Color(73, 80, 87));
         showPasswordCheckbox.setOpaque(false);
-        showPasswordCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        showPasswordCheckbox.setHorizontalAlignment(SwingConstants.LEADING);
         showPasswordCheckbox.addActionListener(e -> {
             if (showPasswordCheckbox.isSelected()) {
                 passwordField.setEchoChar((char) 0);
@@ -116,49 +196,111 @@ public class LoginFrame extends JFrame {
                 passwordField.setEchoChar('*');
             }
         });
-        formContainer.add(showPasswordCheckbox);
-        formContainer.add(Box.createVerticalStrut(22));
+        gbc.gridy = 5;
+        gbc.insets = new Insets(0, 0, 20, 0);
+        formContainer.add(showPasswordCheckbox, gbc);
 
-        loginButton = new JButton("Sign In");
+        loginButton = new JButton();
         loginButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        loginButton.setBackground(new Color(13, 110, 253));
         loginButton.setForeground(Color.WHITE);
         loginButton.setFocusPainted(false);
         loginButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        loginButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        loginButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        loginButton.setPreferredSize(new Dimension(100, 42));
+        gbc.gridy = 6;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        formContainer.add(loginButton, gbc);
 
-        exitButton = new JButton("Exit");
-        exitButton.setIcon(IconFactory.signOut(15, new Color(73, 80, 87)));
+        exitButton = new JButton();
         exitButton.setIconTextGap(8);
         exitButton.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         exitButton.setFocusPainted(false);
         exitButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        exitButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
-        exitButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        formContainer.add(loginButton);
-        formContainer.add(Box.createVerticalStrut(10));
-        formContainer.add(exitButton);
-        formContainer.add(Box.createVerticalStrut(16));
+        exitButton.setPreferredSize(new Dimension(100, 38));
+        gbc.gridy = 7;
+        gbc.insets = new Insets(0, 0, 14, 0);
+        formContainer.add(exitButton, gbc);
 
         progressBar = new JProgressBar();
         progressBar.setIndeterminate(true);
         progressBar.setVisible(false);
-        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 4));
-        progressBar.setAlignmentX(Component.LEFT_ALIGNMENT);
-        formContainer.add(progressBar);
+        progressBar.setPreferredSize(new Dimension(100, 4));
+        gbc.gridy = 8;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        formContainer.add(progressBar, gbc);
 
         rootPanel.add(formContainer, BorderLayout.CENTER);
 
-        JLabel footerLabel = new JLabel("NEXUS IMS v1.0.0 - Java II Architecture", SwingConstants.CENTER);
+        footerPanel = new JPanel(new BorderLayout());
+        footerLabel = new JLabel("", SwingConstants.CENTER);
         footerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        footerLabel.setForeground(new Color(108, 117, 125));
         footerLabel.setBorder(new EmptyBorder(10, 10, 14, 10));
-        rootPanel.add(footerLabel, BorderLayout.SOUTH);
+        footerPanel.add(footerLabel, BorderLayout.CENTER);
+        rootPanel.add(footerPanel, BorderLayout.SOUTH);
 
         setContentPane(rootPanel);
         getRootPane().setDefaultButton(loginButton);
+    }
+
+    private void applyThemeAndLanguage() {
+        updatingControls = true;
+        try {
+            setTitle(LanguageManager.get("login.title"));
+            logoBadge.setText(LanguageManager.get("login.heading"));
+            logoBadge.setIcon(IconFactory.brandLogo(28, ThemeManager.accentPrimary()));
+            subtitleLabel.setText(LanguageManager.get("login.subheading"));
+            subtitleLabel.setForeground(ThemeManager.sidebarTextMuted());
+
+            usernamePrompt.setText(LanguageManager.get("login.username"));
+            usernamePrompt.setForeground(ThemeManager.textSecondary());
+            usernameField.putClientProperty("JTextField.placeholderText", LanguageManager.get("login.username"));
+
+            passwordPrompt.setText(LanguageManager.get("login.password"));
+            passwordPrompt.setForeground(ThemeManager.textSecondary());
+            passwordField.putClientProperty("JTextField.placeholderText", LanguageManager.get("login.password"));
+
+            showPasswordCheckbox.setText(LanguageManager.get("login.showPassword"));
+            showPasswordCheckbox.setForeground(ThemeManager.textSecondary());
+
+            loginButton.setText(LanguageManager.get("login.signIn"));
+            loginButton.setBackground(ThemeManager.accentPrimary());
+            loginButton.setForeground(Color.WHITE);
+
+            exitButton.setText(LanguageManager.get("login.exit"));
+            exitButton.setBackground(ThemeManager.btnSecondaryBg());
+            exitButton.setForeground(ThemeManager.btnSecondaryFg());
+            exitButton.setIcon(IconFactory.signOut(15, ThemeManager.btnSecondaryFg()));
+
+            footerLabel.setText(LanguageManager.get("login.footer"));
+            footerLabel.setForeground(ThemeManager.textSecondary());
+
+            rootPanel.setBackground(ThemeManager.bgCanvas());
+            headerPanel.setBackground(ThemeManager.bgSidebar());
+            formContainer.setBackground(ThemeManager.bgSurface());
+            footerPanel.setBackground(ThemeManager.bgCanvas());
+            footerPanel.setBorder(BorderFactory.createMatteBorder(1, 0, 0, 0, ThemeManager.borderSubtle()));
+
+            errorLabel.setForeground(ThemeManager.accentDanger());
+            if (lastErrorMessage != null && !lastErrorMessage.trim().isEmpty()) {
+                errorLabel.setIcon(IconFactory.alert(16, ThemeManager.accentDanger()));
+            }
+
+            themeCombo.setSelectedItem(ThemeManager.getMode());
+            languageCombo.setSelectedItem(LanguageManager.getLanguage());
+        } finally {
+            updatingControls = false;
+        }
+
+        LanguageManager.applyOrientation(this);
+        themeCombo.repaint();
+        languageCombo.repaint();
+    }
+
+    private String getThemeModeLabel(ThemeMode mode) {
+        return switch (mode) {
+            case LIGHT -> LanguageManager.get("theme.light");
+            case DARK -> LanguageManager.get("theme.dark");
+            case SYSTEM -> LanguageManager.get("theme.system");
+        };
     }
 
     public String getUsername() {
@@ -170,12 +312,14 @@ public class LoginFrame extends JFrame {
     }
 
     public void setErrorMessage(String message) {
+        this.lastErrorMessage = message;
         if (message == null || message.trim().isEmpty()) {
             errorLabel.setIcon(null);
             errorLabel.setText(" ");
             errorLabel.setToolTipText(null);
         } else {
-            errorLabel.setIcon(IconFactory.alert(16, new Color(220, 53, 69)));
+            errorLabel.setIcon(IconFactory.alert(16, ThemeManager.accentDanger()));
+            errorLabel.setForeground(ThemeManager.accentDanger());
             errorLabel.setText("<html>" + message + "</html>");
             errorLabel.setToolTipText(message);
         }
@@ -184,6 +328,7 @@ public class LoginFrame extends JFrame {
     public void setLoading(boolean isLoading) {
         progressBar.setVisible(isLoading);
         loginButton.setEnabled(!isLoading);
+        loginButton.setText(isLoading ? LanguageManager.get("login.signingIn") : LanguageManager.get("login.signIn"));
         usernameField.setEnabled(!isLoading);
         passwordField.setEnabled(!isLoading);
     }
@@ -201,5 +346,12 @@ public class LoginFrame extends JFrame {
         passwordField.setText("");
         setErrorMessage(null);
         usernameField.requestFocusInWindow();
+    }
+
+    @Override
+    public void dispose() {
+        ThemeManager.removeThemeListener(themeListener);
+        LanguageManager.removeLanguageListener(languageListener);
+        super.dispose();
     }
 }

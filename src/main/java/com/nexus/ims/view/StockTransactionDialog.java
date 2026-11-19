@@ -3,15 +3,17 @@ package com.nexus.ims.view;
 import com.nexus.ims.model.Product;
 import com.nexus.ims.model.StockTransaction;
 import com.nexus.ims.util.IconFactory;
+import com.nexus.ims.util.LanguageManager;
+import com.nexus.ims.util.ThemeManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.List;
 
 /**
- * Dedicated modal dialog for Stock IN (receipts/restocks) and Stock OUT (sales/write-offs).
- * Allows direct product selection via dropdown without requiring a pre-highlighted row in another tab.
+ * Modal dialog for logging Stock IN receipts and Stock OUT dispatches/adjustments.
  */
 public class StockTransactionDialog extends JDialog {
     private final boolean inboundMode;
@@ -26,11 +28,14 @@ public class StockTransactionDialog extends JDialog {
     public StockTransactionDialog(Frame owner, boolean inboundMode,
                                   List<Product> products, Integer preselectedProductId) {
         super(owner,
-              inboundMode ? "Inbound Receipt (Stock IN)" : "Outbound Dispatch (Stock OUT)",
+              inboundMode
+                      ? LanguageManager.get("transactions.dialog.inTitle")
+                      : LanguageManager.get("transactions.dialog.outTitle"),
               true);
         this.inboundMode = inboundMode;
 
         initComponents(products, preselectedProductId);
+        LanguageManager.applyOrientation(this);
         pack();
         setMinimumSize(new Dimension(500, 380));
         setLocationRelativeTo(owner);
@@ -40,11 +45,12 @@ public class StockTransactionDialog extends JDialog {
     private void initComponents(List<Product> products, Integer preselectedProductId) {
         JPanel root = new JPanel(new BorderLayout(12, 12));
         root.setBorder(new EmptyBorder(18, 20, 16, 20));
-        root.setBackground(Color.WHITE);
+        root.setBackground(ThemeManager.bgSurface());
 
         errorLabel = new JLabel(" ");
         errorLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        errorLabel.setForeground(new Color(220, 53, 69));
+        errorLabel.setForeground(ThemeManager.accentDanger());
+        errorLabel.setHorizontalAlignment(SwingConstants.LEADING);
         root.add(errorLabel, BorderLayout.NORTH);
 
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -52,9 +58,8 @@ public class StockTransactionDialog extends JDialog {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.LINE_START;
 
-        // Product Selector
         productCombo = new JComboBox<>();
         int preselectIndex = -1;
         if (products != null) {
@@ -73,16 +78,17 @@ public class StockTransactionDialog extends JDialog {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index,
                                                           boolean isSelected, boolean cellHasFocus) {
-                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Product p) {
-                    setText(String.format("[%s] %s (Stock: %d)", p.getSku(), p.getName(), p.getQuantityInStock()));
+                    label.setText(LanguageManager.format("transactions.form.stockFormat",
+                            p.getSku(), p.getName(), p.getQuantityInStock()));
                 }
-                return this;
+                label.setHorizontalAlignment(SwingConstants.LEADING);
+                return label;
             }
         });
-        addFormRow(formPanel, gbc, 0, "Product *:", productCombo);
+        addFormRow(formPanel, gbc, 0, LanguageManager.get("transactions.form.product") + " *:", productCombo);
 
-        // Transaction Type Selector
         if (inboundMode) {
             typeCombo = new JComboBox<>(new StockTransaction.TransactionType[]{
                     StockTransaction.TransactionType.INBOUND_PURCHASE,
@@ -96,13 +102,23 @@ public class StockTransactionDialog extends JDialog {
                     StockTransaction.TransactionType.ADJUSTMENT_COUNT
             });
         }
-        addFormRow(formPanel, gbc, 1, "Transaction Type *:", typeCombo);
+        typeCombo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                          boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof StockTransaction.TransactionType type) {
+                    label.setText(LanguageManager.get("transactions.type." + type.name()));
+                }
+                label.setHorizontalAlignment(SwingConstants.LEADING);
+                return label;
+            }
+        });
+        addFormRow(formPanel, gbc, 1, LanguageManager.get("transactions.form.type") + " *:", typeCombo);
 
-        // Quantity Input
         quantitySpinner = new JSpinner(new SpinnerNumberModel(1, 1, 1_000_000, 1));
-        addFormRow(formPanel, gbc, 2, "Quantity *:", quantitySpinner);
+        addFormRow(formPanel, gbc, 2, LanguageManager.get("transactions.form.quantity") + " *:", quantitySpinner);
 
-        // Notes Area
         notesArea = new JTextArea(3, 22);
         notesArea.setLineWrap(true);
         notesArea.setWrapStyleWord(true);
@@ -111,10 +127,11 @@ public class StockTransactionDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0.0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        JLabel notesLabel = new JLabel("Reference / Notes:");
+        gbc.anchor = GridBagConstraints.FIRST_LINE_START;
+        JLabel notesLabel = new JLabel(LanguageManager.get("transactions.form.notes") + ":");
         notesLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        notesLabel.setForeground(new Color(73, 80, 87));
+        notesLabel.setForeground(ThemeManager.textSecondary());
+        notesLabel.setHorizontalAlignment(SwingConstants.LEADING);
         formPanel.add(notesLabel, gbc);
 
         gbc.gridx = 1;
@@ -125,19 +142,22 @@ public class StockTransactionDialog extends JDialog {
 
         root.add(formPanel, BorderLayout.CENTER);
 
-        // Action Buttons
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 10, 0));
         buttonPanel.setOpaque(false);
 
-        JButton cancelButton = new JButton("Cancel");
+        JButton cancelButton = new JButton(LanguageManager.get("common.cancel"));
+        cancelButton.setBackground(ThemeManager.btnSecondaryBg());
+        cancelButton.setForeground(ThemeManager.btnSecondaryFg());
         cancelButton.addActionListener(e -> {
             confirmed = false;
             dispose();
         });
 
-        JButton submitButton = new JButton(inboundMode ? "Confirm Stock IN" : "Confirm Stock OUT");
+        JButton submitButton = new JButton(inboundMode
+                ? LanguageManager.get("transactions.form.submitIn")
+                : LanguageManager.get("transactions.form.submitOut"));
         submitButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        submitButton.setBackground(inboundMode ? new Color(25, 135, 84) : new Color(220, 53, 69));
+        submitButton.setBackground(inboundMode ? ThemeManager.accentSuccess() : ThemeManager.accentDanger());
         submitButton.setForeground(Color.WHITE);
         submitButton.addActionListener(e -> handleSubmit());
 
@@ -147,6 +167,14 @@ public class StockTransactionDialog extends JDialog {
 
         setContentPane(root);
         getRootPane().setDefaultButton(submitButton);
+        getRootPane().registerKeyboardAction(
+                e -> {
+                    confirmed = false;
+                    dispose();
+                },
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String labelText, JComponent field) {
@@ -155,11 +183,12 @@ public class StockTransactionDialog extends JDialog {
         gbc.weightx = 0.0;
         gbc.weighty = 0.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.LINE_START;
 
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        label.setForeground(new Color(73, 80, 87));
+        label.setForeground(ThemeManager.textSecondary());
+        label.setHorizontalAlignment(SwingConstants.LEADING);
         panel.add(label, gbc);
 
         gbc.gridx = 1;
@@ -170,19 +199,19 @@ public class StockTransactionDialog extends JDialog {
     private void handleSubmit() {
         Product selected = getSelectedProduct();
         if (selected == null) {
-            showValidationError("Please select a product.");
+            showValidationError(LanguageManager.get("transactions.validation.product"));
             return;
         }
 
         int qty = getQuantity();
         if (qty <= 0) {
-            showValidationError("Quantity must be greater than zero.");
+            showValidationError(LanguageManager.get("transactions.validation.quantity"));
             return;
         }
 
         if (!inboundMode && qty > selected.getQuantityInStock()) {
-            showValidationError(String.format("Insufficient stock for %s (Available: %d, Requested: %d).",
-                    selected.getSku(), selected.getQuantityInStock(), qty));
+            showValidationError(LanguageManager.format("transactions.validation.insufficient",
+                    selected.getQuantityInStock(), qty));
             return;
         }
 
@@ -191,8 +220,9 @@ public class StockTransactionDialog extends JDialog {
     }
 
     private void showValidationError(String msg) {
-        errorLabel.setIcon(IconFactory.alert(15, new Color(220, 53, 69)));
+        errorLabel.setIcon(IconFactory.alert(15, ThemeManager.accentDanger()));
         errorLabel.setIconTextGap(6);
+        errorLabel.setForeground(ThemeManager.accentDanger());
         errorLabel.setText(msg);
     }
 

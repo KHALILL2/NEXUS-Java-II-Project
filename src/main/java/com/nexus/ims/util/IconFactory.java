@@ -362,4 +362,213 @@ public final class IconFactory {
             g2.draw(rightBrace);
         });
     }
+
+    public static Icon users(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            // Primary user head & shoulders
+            g2.draw(new Ellipse2D.Float(3.8f, 2.6f, 4.4f, 4.4f));
+            Path2D body1 = new Path2D.Float();
+            body1.moveTo(1.8, 13.6);
+            body1.quadTo(1.8, 9.4, 6.0, 9.4);
+            body1.quadTo(10.2, 9.4, 10.2, 13.6);
+            g2.draw(body1);
+
+            // Secondary user head & shoulder arc
+            g2.draw(new Ellipse2D.Float(9.6f, 3.6f, 3.4f, 3.4f));
+            Path2D body2 = new Path2D.Float();
+            body2.moveTo(11.2, 9.5);
+            body2.quadTo(14.2, 9.7, 14.4, 13.4);
+            g2.draw(body2);
+        });
+    }
+
+    public static Icon key(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new Ellipse2D.Float(2.0f, 5.2f, 5.2f, 5.2f));
+            g2.draw(new Line2D.Float(7.2f, 7.8f, 14.0f, 7.8f));
+            g2.draw(new Line2D.Float(11.4f, 7.8f, 11.4f, 10.6f));
+            g2.draw(new Line2D.Float(13.8f, 7.8f, 13.8f, 11.0f));
+        });
+    }
+
+    public static Icon categories(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            Path2D tag = new Path2D.Float();
+            tag.moveTo(2.2, 2.4);
+            tag.lineTo(8.2, 2.4);
+            tag.lineTo(13.8, 8.0);
+            tag.lineTo(8.0, 13.8);
+            tag.lineTo(2.2, 8.2);
+            tag.closePath();
+            g2.draw(tag);
+            g2.fill(new Ellipse2D.Float(4.4f, 4.6f, 1.8f, 1.8f));
+        });
+    }
+
+    /**
+     * Sun icon for Light Theme mode.
+     */
+    public static Icon sun(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new Ellipse2D.Float(5.0f, 5.0f, 6.0f, 6.0f));
+            g2.draw(new Line2D.Float(8.0f, 1.5f, 8.0f, 3.2f));
+            g2.draw(new Line2D.Float(8.0f, 12.8f, 8.0f, 14.5f));
+            g2.draw(new Line2D.Float(1.5f, 8.0f, 3.2f, 8.0f));
+            g2.draw(new Line2D.Float(12.8f, 8.0f, 14.5f, 8.0f));
+            g2.draw(new Line2D.Float(3.4f, 3.4f, 4.6f, 4.6f));
+            g2.draw(new Line2D.Float(11.4f, 11.4f, 12.6f, 12.6f));
+            g2.draw(new Line2D.Float(3.4f, 12.6f, 4.6f, 11.4f));
+            g2.draw(new Line2D.Float(11.4f, 4.6f, 12.6f, 3.4f));
+        });
+    }
+
+    /**
+     * Crescent moon icon for Dark Theme mode.
+     */
+    public static Icon moon(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            Path2D moon = new Path2D.Float();
+            moon.moveTo(10.6, 2.2);
+            moon.curveTo(6.4, 2.6, 3.4, 6.4, 4.2, 10.4);
+            moon.curveTo(4.9, 13.6, 8.4, 15.0, 11.8, 13.4);
+            moon.curveTo(12.8, 12.9, 13.5, 12.2, 13.9, 11.3);
+            moon.curveTo(11.0, 12.0, 8.1, 10.2, 7.6, 7.3);
+            moon.curveTo(7.2, 5.1, 8.4, 3.1, 10.6, 2.2);
+            moon.closePath();
+            g2.draw(moon);
+        });
+    }
+
+    /**
+     * Monitor/contrast icon for System Default Theme mode.
+     */
+    public static Icon systemTheme(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new RoundRectangle2D.Float(1.8f, 2.5f, 12.4f, 8.8f, 1.8f, 1.8f));
+            g2.draw(new Line2D.Float(5.2f, 13.8f, 10.8f, 13.8f));
+            g2.draw(new Line2D.Float(8.0f, 11.3f, 8.0f, 13.8f));
+            Path2D half = new Path2D.Float();
+            half.moveTo(8.0, 4.0);
+            half.lineTo(12.6, 4.0);
+            half.lineTo(12.6, 9.8);
+            half.lineTo(8.0, 9.8);
+            half.closePath();
+            g2.fill(half);
+        });
+    }
+
+    /**
+     * Globe icon for Language selector.
+     */
+    public static Icon globe(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new Ellipse2D.Float(2.0f, 2.0f, 12.0f, 12.0f));
+            g2.draw(new Ellipse2D.Float(5.2f, 2.0f, 5.6f, 12.0f));
+            g2.draw(new Line2D.Float(2.2f, 8.0f, 13.8f, 8.0f));
+            g2.draw(new Line2D.Float(3.4f, 5.0f, 12.6f, 5.0f));
+            g2.draw(new Line2D.Float(3.4f, 11.0f, 12.6f, 11.0f));
+        });
+    }
+
+    /**
+     * Stacked warehouse boxes icon for total stocked units KPI.
+     */
+    public static Icon warehouseBoxes(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new RoundRectangle2D.Float(4.8f, 2.0f, 6.4f, 5.2f, 1.2f, 1.2f));
+            g2.draw(new Line2D.Float(8.0f, 2.0f, 8.0f, 3.8f));
+
+            g2.draw(new RoundRectangle2D.Float(1.8f, 8.6f, 5.6f, 5.4f, 1.2f, 1.2f));
+            g2.draw(new Line2D.Float(4.6f, 8.6f, 4.6f, 10.4f));
+
+            g2.draw(new RoundRectangle2D.Float(8.6f, 8.6f, 5.6f, 5.4f, 1.2f, 1.2f));
+            g2.draw(new Line2D.Float(11.4f, 8.6f, 11.4f, 10.4f));
+        });
+    }
+
+    /**
+     * Wallet currency badge icon for inventory valuation KPI.
+     */
+    public static Icon dollarWallet(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new RoundRectangle2D.Float(1.8f, 3.0f, 12.4f, 10.0f, 2.2f, 2.2f));
+            g2.draw(new RoundRectangle2D.Float(9.8f, 6.3f, 4.4f, 3.4f, 1.2f, 1.2f));
+            g2.fill(new Ellipse2D.Float(11.0f, 7.3f, 1.4f, 1.4f));
+
+            g2.draw(new Line2D.Float(5.8f, 4.8f, 5.8f, 11.2f));
+            Path2D s = new Path2D.Float();
+            s.moveTo(7.4, 5.7);
+            s.curveTo(5.8, 5.1, 4.2, 5.7, 4.4, 7.0);
+            s.curveTo(4.6, 8.1, 7.2, 7.9, 7.2, 9.2);
+            s.curveTo(7.2, 10.4, 5.4, 10.8, 4.2, 10.1);
+            g2.draw(s);
+        });
+    }
+
+    /**
+     * Sidebar layout toggle icon.
+     */
+    public static Icon sidebarToggle(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new RoundRectangle2D.Float(1.8f, 2.4f, 12.4f, 11.2f, 2.0f, 2.0f));
+            g2.draw(new Line2D.Float(5.8f, 2.4f, 5.8f, 13.6f));
+            g2.draw(new Line2D.Float(3.3f, 5.3f, 4.4f, 5.3f));
+            g2.draw(new Line2D.Float(3.3f, 7.8f, 4.4f, 7.8f));
+            g2.draw(new Line2D.Float(7.8f, 6.0f, 12.2f, 6.0f));
+            g2.draw(new Line2D.Float(7.8f, 9.2f, 10.8f, 9.2f));
+        });
+    }
+
+    /**
+     * Verified shield checkmark icon for healthy stock empty states.
+     */
+    public static Icon checkShield(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            Path2D shield = new Path2D.Float();
+            shield.moveTo(8.0, 1.7);
+            shield.lineTo(13.3, 3.7);
+            shield.curveTo(13.3, 8.4, 12.3, 11.6, 8.0, 14.3);
+            shield.curveTo(3.7, 11.6, 2.7, 8.4, 2.7, 3.7);
+            shield.closePath();
+            g2.draw(shield);
+
+            Path2D check = new Path2D.Float();
+            check.moveTo(5.4, 8.0);
+            check.lineTo(7.2, 9.9);
+            check.lineTo(10.8, 6.0);
+            g2.draw(check);
+        });
+    }
+
+    /**
+     * Copy-to-clipboard icon for SKU context menu action.
+     */
+    public static Icon copy(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new RoundRectangle2D.Float(2.4f, 5.0f, 8.2f, 8.8f, 1.6f, 1.6f));
+            Path2D back = new Path2D.Float();
+            back.moveTo(5.6, 4.8);
+            back.lineTo(5.6, 2.5);
+            back.lineTo(13.4, 2.5);
+            back.lineTo(13.4, 11.0);
+            back.lineTo(10.8, 11.0);
+            g2.draw(back);
+        });
+    }
+
+    /**
+     * Calendar icon for timeframe filtering.
+     */
+    public static Icon calendar(int size, Color color) {
+        return new VectorIcon(size, color, (g2, c) -> {
+            g2.draw(new RoundRectangle2D.Float(2.0f, 3.2f, 12.0f, 10.8f, 1.8f, 1.8f));
+            g2.draw(new Line2D.Float(2.0f, 6.6f, 14.0f, 6.6f));
+            g2.draw(new Line2D.Float(5.2f, 1.7f, 5.2f, 4.2f));
+            g2.draw(new Line2D.Float(10.8f, 1.7f, 10.8f, 4.2f));
+            g2.fill(new Ellipse2D.Float(4.3f, 8.3f, 1.6f, 1.6f));
+            g2.fill(new Ellipse2D.Float(7.2f, 8.3f, 1.6f, 1.6f));
+            g2.fill(new Ellipse2D.Float(10.1f, 8.3f, 1.6f, 1.6f));
+            g2.fill(new Ellipse2D.Float(4.3f, 10.9f, 1.6f, 1.6f));
+        });
+    }
 }

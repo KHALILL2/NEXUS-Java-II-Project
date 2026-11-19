@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Domain entity representing an authenticated system operator.
+ * System operator entity with RBAC role and account activation state.
  */
 public class User {
 

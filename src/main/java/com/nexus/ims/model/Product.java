@@ -5,8 +5,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Domain entity representing an inventory product item.
- * Strictly encapsulated with validation rules and business logic helpers.
+ * Catalog product entity tracking pricing, stock count, and reorder thresholds.
  */
 public class Product {
     private int id;
@@ -55,7 +54,6 @@ public class Product {
         this.updatedAt = updatedAt;
     }
 
-    // Getters and Setters with Validations
     public int getId() {
         return id;
     }

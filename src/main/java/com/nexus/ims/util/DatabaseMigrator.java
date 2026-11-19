@@ -169,22 +169,22 @@ public class DatabaseMigrator {
     }
 
     private static void executeSqlScript(Connection conn, String resourcePath) throws Exception {
-        InputStream stream = DatabaseMigrator.class.getClassLoader().getResourceAsStream(resourcePath);
-        if (stream == null) {
-            throw new IllegalArgumentException("Resource file not found: " + resourcePath);
-        }
-
         StringBuilder sb = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String trimmed = line.trim();
-                if (trimmed.isEmpty() || trimmed.startsWith("--") || trimmed.startsWith("//")) {
-                    continue;
-                }
-                String cleaned = stripInlineSqlComment(line);
-                if (!cleaned.trim().isEmpty()) {
-                    sb.append(cleaned).append("\n");
+        try (InputStream stream = DatabaseMigrator.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (stream == null) {
+                throw new IllegalArgumentException("Resource file not found: " + resourcePath);
+            }
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String trimmed = line.trim();
+                    if (trimmed.isEmpty() || trimmed.startsWith("--") || trimmed.startsWith("//")) {
+                        continue;
+                    }
+                    String cleaned = stripInlineSqlComment(line);
+                    if (!cleaned.trim().isEmpty()) {
+                        sb.append(cleaned).append("\n");
+                    }
                 }
             }
         }

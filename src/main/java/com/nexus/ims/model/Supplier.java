@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Objects;
 
 /**
- * Domain entity representing an inventory supplier/vendor.
+ * Vendor/supplier entity storing contact and fulfillment details.
  */
 public class Supplier {
     private int id;

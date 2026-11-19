@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * JDBC Data Access Object for managing Supplier vendor records.
+ * JDBC Data Access Object for vendor/supplier records.
  */
 public class SupplierDAO implements BaseDAO<Supplier> {
     private static final Logger LOGGER = Logger.getLogger(SupplierDAO.class.getName());

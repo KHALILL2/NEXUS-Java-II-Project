@@ -10,7 +10,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * JDBC Data Access Object for managing inventory Category records.
+ * JDBC Data Access Object for product categories.
  */
 public class CategoryDAO implements BaseDAO<Category> {
     private static final Logger LOGGER = Logger.getLogger(CategoryDAO.class.getName());
@@ -128,6 +128,25 @@ public class CategoryDAO implements BaseDAO<Category> {
             LOGGER.log(Level.SEVERE, "Error fetching all categories", e);
         }
         return categories;
+    }
+
+    /**
+     * Counts how many products currently reference this category ID.
+     */
+    public int countProductsByCategoryId(int categoryId) {
+        String sql = "SELECT COUNT(*) FROM products WHERE category_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, categoryId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error counting products for category ID: " + categoryId, e);
+        }
+        return 0;
     }
 
     private Category mapResultSetToCategory(ResultSet rs) throws SQLException {

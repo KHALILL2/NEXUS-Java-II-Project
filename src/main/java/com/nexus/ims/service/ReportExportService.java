@@ -47,8 +47,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Centralized multi-format report export engine supporting native PDF (OpenPDF),
- * multi-sheet Excel .xlsx (Apache POI), UTF-8 BOM CSV, and pretty-printed JSON.
+ * Exports catalog, valuation, low-stock reorder schedules, and audit ledger data
+ * to PDF (OpenPDF), Excel .xlsx (Apache POI), UTF-8 BOM CSV, or formatted JSON.
  */
 public class ReportExportService {
     private static final DateTimeFormatter TS_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");

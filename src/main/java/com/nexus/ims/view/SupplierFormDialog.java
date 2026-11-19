@@ -2,13 +2,16 @@ package com.nexus.ims.view;
 
 import com.nexus.ims.model.Supplier;
 import com.nexus.ims.util.IconFactory;
+import com.nexus.ims.util.LanguageManager;
+import com.nexus.ims.util.ThemeManager;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 
 /**
- * Modal FlatLaf dialog supporting both creating a new Supplier and editing an existing Supplier.
+ * Modal form dialog for creating or editing a supplier record.
  */
 public class SupplierFormDialog extends JDialog {
     private final Supplier existingSupplier;
@@ -23,12 +26,15 @@ public class SupplierFormDialog extends JDialog {
 
     public SupplierFormDialog(Frame owner, Supplier existingSupplier) {
         super(owner,
-              existingSupplier == null ? "Add New Supplier" : "Edit Supplier - " + existingSupplier.getName(),
+              existingSupplier == null
+                      ? LanguageManager.get("suppliers.dialog.addTitle")
+                      : LanguageManager.format("suppliers.dialog.editTitleFormat", existingSupplier.getName()),
               true);
         this.existingSupplier = existingSupplier;
 
         initComponents();
         populateExistingData();
+        LanguageManager.applyOrientation(this);
         pack();
         setMinimumSize(new Dimension(490, 420));
         setLocationRelativeTo(owner);
@@ -38,12 +44,13 @@ public class SupplierFormDialog extends JDialog {
     private void initComponents() {
         JPanel root = new JPanel(new BorderLayout(12, 12));
         root.setBorder(new EmptyBorder(18, 20, 16, 20));
-        root.setBackground(Color.WHITE);
+        root.setBackground(ThemeManager.bgSurface());
 
         errorLabel = new JLabel(" ");
         errorLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        errorLabel.setForeground(new Color(220, 53, 69));
+        errorLabel.setForeground(ThemeManager.accentDanger());
         errorLabel.setIconTextGap(6);
+        errorLabel.setHorizontalAlignment(SwingConstants.LEADING);
         root.add(errorLabel, BorderLayout.NORTH);
 
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -51,25 +58,25 @@ public class SupplierFormDialog extends JDialog {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.LINE_START;
 
         int row = 0;
 
         nameField = new JTextField(22);
-        nameField.putClientProperty("JTextField.placeholderText", "e.g. Dell Technologies Direct");
-        addFormRow(formPanel, gbc, row++, "Supplier Name *:", nameField);
+        nameField.putClientProperty("JTextField.placeholderText", LanguageManager.get("suppliers.form.namePlaceholder"));
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("suppliers.form.name") + " *:", nameField);
 
         contactPersonField = new JTextField(22);
-        contactPersonField.putClientProperty("JTextField.placeholderText", "Primary account contact");
-        addFormRow(formPanel, gbc, row++, "Contact Person:", contactPersonField);
+        contactPersonField.putClientProperty("JTextField.placeholderText", LanguageManager.get("suppliers.form.contactPlaceholder"));
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("suppliers.form.contact") + ":", contactPersonField);
 
         emailField = new JTextField(22);
-        emailField.putClientProperty("JTextField.placeholderText", "orders@vendor.com");
-        addFormRow(formPanel, gbc, row++, "Email:", emailField);
+        emailField.putClientProperty("JTextField.placeholderText", LanguageManager.get("suppliers.form.emailPlaceholder"));
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("suppliers.form.email") + ":", emailField);
 
         phoneField = new JTextField(22);
-        phoneField.putClientProperty("JTextField.placeholderText", "+1-800-555-0100");
-        addFormRow(formPanel, gbc, row++, "Phone:", phoneField);
+        phoneField.putClientProperty("JTextField.placeholderText", LanguageManager.get("suppliers.form.phonePlaceholder"));
+        addFormRow(formPanel, gbc, row++, LanguageManager.get("suppliers.form.phone") + ":", phoneField);
 
         addressArea = new JTextArea(3, 22);
         addressArea.setLineWrap(true);
@@ -79,10 +86,11 @@ public class SupplierFormDialog extends JDialog {
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.weightx = 0.0;
-        gbc.anchor = GridBagConstraints.NORTHWEST;
-        JLabel addrLabel = new JLabel("Address:");
+        gbc.anchor = GridBagConstraints.FIRST_LINE_START;
+        JLabel addrLabel = new JLabel(LanguageManager.get("suppliers.form.address") + ":");
         addrLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        addrLabel.setForeground(new Color(73, 80, 87));
+        addrLabel.setForeground(ThemeManager.textSecondary());
+        addrLabel.setHorizontalAlignment(SwingConstants.LEADING);
         formPanel.add(addrLabel, gbc);
 
         gbc.gridx = 1;
@@ -93,18 +101,22 @@ public class SupplierFormDialog extends JDialog {
 
         root.add(formPanel, BorderLayout.CENTER);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.TRAILING, 10, 0));
         buttonPanel.setOpaque(false);
 
-        JButton cancelButton = new JButton("Cancel");
+        JButton cancelButton = new JButton(LanguageManager.get("common.cancel"));
+        cancelButton.setBackground(ThemeManager.btnSecondaryBg());
+        cancelButton.setForeground(ThemeManager.btnSecondaryFg());
         cancelButton.addActionListener(e -> {
             confirmed = false;
             dispose();
         });
 
-        JButton saveButton = new JButton(existingSupplier == null ? "Save Supplier" : "Update Supplier");
+        JButton saveButton = new JButton(existingSupplier == null
+                ? LanguageManager.get("suppliers.form.save")
+                : LanguageManager.get("suppliers.form.update"));
         saveButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        saveButton.setBackground(new Color(13, 110, 253));
+        saveButton.setBackground(ThemeManager.accentPrimary());
         saveButton.setForeground(Color.WHITE);
         saveButton.addActionListener(e -> handleSave());
 
@@ -114,6 +126,14 @@ public class SupplierFormDialog extends JDialog {
 
         setContentPane(root);
         getRootPane().setDefaultButton(saveButton);
+        getRootPane().registerKeyboardAction(
+                e -> {
+                    confirmed = false;
+                    dispose();
+                },
+                KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0),
+                JComponent.WHEN_IN_FOCUSED_WINDOW
+        );
     }
 
     private void addFormRow(JPanel panel, GridBagConstraints gbc, int row, String labelText, JComponent field) {
@@ -122,11 +142,12 @@ public class SupplierFormDialog extends JDialog {
         gbc.weightx = 0.0;
         gbc.weighty = 0.0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.LINE_START;
 
         JLabel label = new JLabel(labelText);
         label.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        label.setForeground(new Color(73, 80, 87));
+        label.setForeground(ThemeManager.textSecondary());
+        label.setHorizontalAlignment(SwingConstants.LEADING);
         panel.add(label, gbc);
 
         gbc.gridx = 1;
@@ -148,14 +169,14 @@ public class SupplierFormDialog extends JDialog {
     private void handleSave() {
         String name = nameField.getText().trim();
         if (name.isEmpty()) {
-            showValidationError("Supplier Name is required.");
+            showValidationError(LanguageManager.get("suppliers.validation.nameRequired"));
             nameField.requestFocusInWindow();
             return;
         }
 
         String email = emailField.getText().trim();
         if (!email.isEmpty() && (!email.contains("@") || !email.contains("."))) {
-            showValidationError("Please enter a valid email address.");
+            showValidationError(LanguageManager.get("suppliers.validation.emailInvalid"));
             emailField.requestFocusInWindow();
             return;
         }
@@ -165,7 +186,8 @@ public class SupplierFormDialog extends JDialog {
     }
 
     private void showValidationError(String message) {
-        errorLabel.setIcon(IconFactory.alert(15, new Color(220, 53, 69)));
+        errorLabel.setIcon(IconFactory.alert(15, ThemeManager.accentDanger()));
+        errorLabel.setForeground(ThemeManager.accentDanger());
         errorLabel.setText(message);
     }
 
