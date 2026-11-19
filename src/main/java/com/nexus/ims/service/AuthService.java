@@ -2,9 +2,11 @@ package com.nexus.ims.service;
 
 import com.nexus.ims.dao.UserDAO;
 import com.nexus.ims.model.User;
+import com.nexus.ims.util.DatabaseConnection;
 import com.nexus.ims.util.DatabaseMigrator;
 import com.nexus.ims.util.PasswordHasher;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
 
@@ -34,6 +36,11 @@ public class AuthService {
         String normalizedUsername = username.trim().toLowerCase();
         if (normalizedUsername.isEmpty() || plainPassword.isEmpty()) {
             return Optional.empty();
+        }
+
+        // Verify database connectivity so connection errors propagate distinctly from invalid credentials
+        try (Connection ignored = DatabaseConnection.getConnection()) {
+            // Connection verified
         }
 
         Optional<User> userOpt = userDAO.findByUsername(normalizedUsername);
